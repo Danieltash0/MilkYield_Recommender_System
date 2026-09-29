@@ -55,3 +55,12 @@ exports.signup = async (req, res) => {
     res.status(500).json({ error: 'Signup failed' });
   }
 };
+
+exports.getAssignableUsers = async (req, res) => {
+  try {
+    res.json(await User.getAssignableUsers());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not load users' });
+  }
+};
