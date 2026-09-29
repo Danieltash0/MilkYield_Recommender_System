@@ -33,6 +33,10 @@ import EditAppointment from './pages/health/EditAppointment';
 import ScanQR from './pages/qr/ScanQR';
 import ResolveQR from './pages/qr/ResolveQR';
 import QRLabels from './pages/qr/QRLabels';
+import Finance from './pages/finance/Finance';
+import AddFinance from './pages/finance/AddFinance';
+import EditFinance from './pages/finance/EditFinance';
+import Reports from './pages/reports/Reports';
 
 const { ADMIN, MANAGER, VET, WORKER } = ROLES;
 const ALL = [ADMIN, MANAGER, VET, WORKER];
@@ -88,6 +92,12 @@ function App() {
             <Route path="/scan" element={<ProtectedRoute allowedRoles={ALL}><ScanQR /></ProtectedRoute>} />
             <Route path="/qr/labels" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><QRLabels /></ProtectedRoute>} />
             <Route path="/qr/:code" element={<ProtectedRoute allowedRoles={ALL}><ResolveQR /></ProtectedRoute>} />
+
+            {/* Finance and reports */}
+            <Route path="/finance" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><Finance /></ProtectedRoute>} />
+            <Route path="/finance/add" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><AddFinance /></ProtectedRoute>} />
+            <Route path="/finance/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><EditFinance /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><Reports /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to={home} replace />} />
           </Routes>
