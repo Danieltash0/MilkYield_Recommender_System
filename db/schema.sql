@@ -44,3 +44,13 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     INDEX idx_activity_logs_user_id (user_id),
     INDEX idx_activity_logs_action (action)
 );
+
+-- feat/admin-management ----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS settings (
+    setting_key VARCHAR(50) PRIMARY KEY,
+    setting_value VARCHAR(255) NULL,
+    updated_by INT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by) REFERENCES users(user_id) ON DELETE SET NULL
+);
