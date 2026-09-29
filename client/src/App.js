@@ -30,6 +30,9 @@ import EditHealthRecord from './pages/health/EditHealthRecord';
 import Appointments from './pages/health/Appointments';
 import AddAppointment from './pages/health/AddAppointment';
 import EditAppointment from './pages/health/EditAppointment';
+import ScanQR from './pages/qr/ScanQR';
+import ResolveQR from './pages/qr/ResolveQR';
+import QRLabels from './pages/qr/QRLabels';
 
 const { ADMIN, MANAGER, VET, WORKER } = ROLES;
 const ALL = [ADMIN, MANAGER, VET, WORKER];
@@ -80,6 +83,11 @@ function App() {
             <Route path="/appointments" element={<ProtectedRoute allowedRoles={ALL}><Appointments /></ProtectedRoute>} />
             <Route path="/appointments/add" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER, VET]}><AddAppointment /></ProtectedRoute>} />
             <Route path="/appointments/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER, VET]}><EditAppointment /></ProtectedRoute>} />
+
+            {/* QR identification */}
+            <Route path="/scan" element={<ProtectedRoute allowedRoles={ALL}><ScanQR /></ProtectedRoute>} />
+            <Route path="/qr/labels" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><QRLabels /></ProtectedRoute>} />
+            <Route path="/qr/:code" element={<ProtectedRoute allowedRoles={ALL}><ResolveQR /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to={home} replace />} />
           </Routes>

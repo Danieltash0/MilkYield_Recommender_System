@@ -4,6 +4,7 @@ import { useAuth, ROLES } from '../../context/AuthContext';
 import { useCattle } from '../../api/useCattle';
 import { healthClass } from '../../components/CattleCard';
 import Loader from '../../components/Loader';
+import CattleQR from '../../components/CattleQR';
 
 const fmt = (d) => (d ? new Date(d + 'T00:00:00').toLocaleDateString() : 'Not specified');
 
@@ -71,6 +72,8 @@ const CattleProfile = () => {
           )}
         </div>
       </div>
+
+      <CattleQR cow={cow} />
     </div>
   );
 };

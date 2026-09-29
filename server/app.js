@@ -19,6 +19,7 @@ app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/milking', require('./routes/milkingRoutes'));
 app.use('/api/health-records', require('./routes/healthRecordRoutes'));
 app.use('/api/appointments', require('./routes/appointmentRoutes'));
+app.use('/api/qr', require('./routes/qrRoutes'));
 
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 

@@ -79,3 +79,13 @@ SELECT c.cattle_id, (SELECT user_id FROM users WHERE email = 'admin@dairydan.com
 FROM cattle c
 WHERE c.tag_number = 'CT003'
   AND NOT EXISTS (SELECT 1 FROM health_appointments a WHERE a.cattle_id = c.cattle_id AND a.reason = 'Mastitis follow-up');
+
+
+-- QR codes for the sample herd: 12 random URL-safe characters each (same
+-- format the API generates). INSERT IGNORE keeps any code already issued.
+INSERT IGNORE INTO qr_codes (cattle_id, code, created_by)
+SELECT c.cattle_id,
+       REPLACE(REPLACE(TO_BASE64(RANDOM_BYTES(9)), '+', '-'), '/', '_'),
+       (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')
+FROM cattle c
+WHERE c.tag_number IN ('CT001', 'CT002', 'CT003', 'CT004', 'CT005');
