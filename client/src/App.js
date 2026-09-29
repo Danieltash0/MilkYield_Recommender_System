@@ -24,6 +24,12 @@ import MilkingRecords from './pages/milking/MilkingRecords';
 import LogMilking from './pages/milking/LogMilking';
 import EditMilking from './pages/milking/EditMilking';
 import CattleMilkHistory from './pages/milking/CattleMilkHistory';
+import HealthRecords from './pages/health/HealthRecords';
+import AddHealthRecord from './pages/health/AddHealthRecord';
+import EditHealthRecord from './pages/health/EditHealthRecord';
+import Appointments from './pages/health/Appointments';
+import AddAppointment from './pages/health/AddAppointment';
+import EditAppointment from './pages/health/EditAppointment';
 
 const { ADMIN, MANAGER, VET, WORKER } = ROLES;
 const ALL = [ADMIN, MANAGER, VET, WORKER];
@@ -66,6 +72,14 @@ function App() {
             <Route path="/tasks" element={<ProtectedRoute allowedRoles={ALL}><TaskList /></ProtectedRoute>} />
             <Route path="/tasks/add" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><AddTask /></ProtectedRoute>} />
             <Route path="/tasks/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><EditTask /></ProtectedRoute>} />
+
+            {/* Vet health */}
+            <Route path="/health" element={<ProtectedRoute allowedRoles={ALL}><HealthRecords /></ProtectedRoute>} />
+            <Route path="/health/add" element={<ProtectedRoute allowedRoles={[ADMIN, VET]}><AddHealthRecord /></ProtectedRoute>} />
+            <Route path="/health/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN, VET]}><EditHealthRecord /></ProtectedRoute>} />
+            <Route path="/appointments" element={<ProtectedRoute allowedRoles={ALL}><Appointments /></ProtectedRoute>} />
+            <Route path="/appointments/add" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER, VET]}><AddAppointment /></ProtectedRoute>} />
+            <Route path="/appointments/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER, VET]}><EditAppointment /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to={home} replace />} />
           </Routes>

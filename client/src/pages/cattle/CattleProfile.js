@@ -62,6 +62,10 @@ const CattleProfile = () => {
           {cow.gender === 'Female' && (
             <Link to={`/cattle/${cow.cattle_id}/milk`} className="btn btn-outline">Milk history</Link>
           )}
+          <Link to={`/health?cattle_id=${cow.cattle_id}`} className="btn btn-outline">Health history</Link>
+          {hasRole(ROLES.ADMIN, ROLES.MANAGER, ROLES.VET) && (
+            <Link to={`/appointments/add?cattle=${cow.cattle_id}`} className="btn btn-outline">Book vet</Link>
+          )}
           {hasRole(ROLES.ADMIN, ROLES.MANAGER) && (
             <Link to={`/cattle/${cow.cattle_id}/edit`} className="btn btn-primary">Edit</Link>
           )}

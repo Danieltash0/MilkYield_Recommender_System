@@ -1,0 +1,40 @@
+/* feat/vet-health */
+.record-list, .appointment-list { display: flex; flex-direction: column; gap: 1rem; }
+.record-list > .card, .appointment-list > .card { margin-bottom: 0; }
+
+.health-record-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.75rem; }
+.health-record-head h3 { margin: 0.35rem 0 0; }
+.health-record-head h3 a { text-decoration: none; }
+.health-record-date { display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; font-weight: 600; white-space: nowrap; }
+.health-record-foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+.due { color: var(--red); font-weight: 700; }
+
+.type-tag { display: inline-block; padding: 0.1rem 0.55rem; border-radius: var(--radius-md); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; background: var(--gray-light); color: var(--gray-medium); }
+.type-illness, .type-injury { background: #f8d7da; color: #842029; }
+.type-treatment { background: #fff3cd; color: #7a5b00; }
+.type-vaccination { background: #cfe2ff; color: #084298; }
+.type-checkup { background: var(--light-green); color: var(--primary-green); }
+
+.segmented { display: inline-flex; border: 1px solid var(--gray-border); border-radius: var(--radius-md); overflow: hidden; background: var(--white); }
+.segmented button { border: 0; background: transparent; padding: 0.5rem 1rem; font: inherit; font-weight: 600; color: var(--gray-medium); cursor: pointer; }
+.segmented button.active { background: var(--primary-green); color: var(--white); }
+.inline-check { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; font-weight: 500; }
+.inline-check input { width: auto; }
+
+.appointment { display: grid; grid-template-columns: 11rem 1fr auto; gap: 1rem; align-items: center; border-left: 4px solid var(--secondary-green); }
+.appt-completed { border-left-color: var(--gray-border); opacity: 0.8; }
+.appt-cancelled { border-left-color: var(--gray-border); opacity: 0.6; }
+.appt-cancelled h3 { text-decoration: line-through; }
+.appt-when { display: flex; flex-direction: column; gap: 0.3rem; }
+.appt-status { font-size: 0.8rem; font-weight: 600; color: var(--gray-medium); }
+.appt-status.overdue { color: var(--red); }
+.appt-body h3 { margin: 0; }
+.appt-body p { margin: 0.2rem 0 0; }
+.appt-body a { text-decoration: none; font-weight: 600; }
+.appt-notes { color: var(--gray-dark); }
+.appt-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+
+@media (max-width: 760px) {
+  .appointment { grid-template-columns: 1fr; }
+  .appt-actions { justify-content: flex-start; }
+}

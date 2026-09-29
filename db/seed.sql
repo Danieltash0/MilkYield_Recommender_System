@@ -55,3 +55,27 @@ JOIN (SELECT 'CT001' AS tag, 26 AS base, 3.6 AS fat UNION ALL
 CROSS JOIN (SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
             UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6) d
 CROSS JOIN (SELECT 'Morning' AS session, 0.55 AS share UNION ALL SELECT 'Evening', 0.45) s;
+
+
+-- Sample health history and an upcoming check for Molly (rated Fair).
+-- Guarded so re-running the seed does not duplicate them.
+INSERT INTO health_records (cattle_id, vet_id, record_date, record_type, diagnosis, treatment, medication, health_status, next_checkup, notes)
+SELECT c.cattle_id, NULL, CURDATE() - INTERVAL 3 DAY, 'Illness', 'Mild mastitis (front left quarter)',
+       'Strip affected quarter, intramammary antibiotic', 'Cloxacillin', 'Fair', CURDATE() + INTERVAL 4 DAY,
+       'Discard milk from treated quarter during withdrawal period'
+FROM cattle c
+WHERE c.tag_number = 'CT003'
+  AND NOT EXISTS (SELECT 1 FROM health_records h WHERE h.cattle_id = c.cattle_id AND h.diagnosis = 'Mild mastitis (front left quarter)');
+
+INSERT INTO health_records (cattle_id, vet_id, record_date, record_type, diagnosis, treatment, health_status, notes)
+SELECT c.cattle_id, NULL, CURDATE() - INTERVAL 30 DAY, 'Vaccination', 'Routine vaccination', 'FMD booster', 'Good', NULL
+FROM cattle c
+WHERE c.tag_number IN ('CT001', 'CT002', 'CT004')
+  AND NOT EXISTS (SELECT 1 FROM health_records h WHERE h.cattle_id = c.cattle_id AND h.diagnosis = 'Routine vaccination');
+
+INSERT INTO health_appointments (cattle_id, scheduled_by, appointment_date, reason, status)
+SELECT c.cattle_id, (SELECT user_id FROM users WHERE email = 'admin@dairydan.com'),
+       TIMESTAMP(CURDATE() + INTERVAL 4 DAY, '09:00:00'), 'Mastitis follow-up', 'Scheduled'
+FROM cattle c
+WHERE c.tag_number = 'CT003'
+  AND NOT EXISTS (SELECT 1 FROM health_appointments a WHERE a.cattle_id = c.cattle_id AND a.reason = 'Mastitis follow-up');
