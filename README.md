@@ -1,4 +1,4 @@
-# DairyDan
+# Milk Yield Recommendation and Management Tool
 
 Role-based dairy farm management system for smallholder and mid-scale dairy
 farmers, built around an integrated milk yield recommender (7-session moving
