@@ -28,6 +28,9 @@ const Navbar = () => {
           <NavLink to="/cattle" className={link}>
             Cattle
           </NavLink>
+          <NavLink to="/scan" className={link}>
+            Scan
+          </NavLink>
           {user.role === ROLES.ADMIN && (
             <span className="nav-soon" title="Coming in a later branch">Users</span>
           )}

@@ -15,3 +15,12 @@ INSERT IGNORE INTO cattle (tag_number, name, breed, health, gender, date_of_birt
 ('CT003', 'Molly',  'Ayrshire',          'Fair',      'Female', '2021-01-10', 'Young heifer, growing well',    (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
 ('CT004', 'Rosie',  'Guernsey',          'Good',      'Female', '2018-11-02', 'Calm temperament',              (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
 ('CT005', 'Duke',   'Friesian',          'Good',      'Male',   '2020-05-30', 'Breeding bull',                 (SELECT user_id FROM users WHERE email = 'admin@dairydan.com'));
+
+-- QR codes for the sample herd: 12 random URL-safe characters each (same
+-- format the API generates). INSERT IGNORE keeps any code already issued.
+INSERT IGNORE INTO qr_codes (cattle_id, code, created_by)
+SELECT c.cattle_id,
+       REPLACE(REPLACE(TO_BASE64(RANDOM_BYTES(9)), '+', '-'), '/', '_'),
+       (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')
+FROM cattle c
+WHERE c.tag_number IN ('CT001', 'CT002', 'CT003', 'CT004', 'CT005');
