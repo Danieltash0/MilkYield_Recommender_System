@@ -9,7 +9,10 @@ import Landing from './pages/Landing';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import Unauthorized from './pages/auth/Unauthorized';
-import Dashboard from './pages/dashboard/Dashboard';
+import AdminDashboard from './pages/dashboard/AdminDashboard';
+import ManagerDashboard from './pages/dashboard/ManagerDashboard';
+import VetDashboard from './pages/dashboard/VetDashboard';
+import WorkerDashboard from './pages/dashboard/WorkerDashboard';
 import CattleList from './pages/cattle/CattleList';
 import AddCattle from './pages/cattle/AddCattle';
 import EditCattle from './pages/cattle/EditCattle';
@@ -35,10 +38,10 @@ function App() {
             <Route path="/unauthorized" element={<Unauthorized />} />
 
             {/* One dashboard per role, each guarded to that role */}
-            <Route path="/dashboard/admin" element={<ProtectedRoute allowedRoles={[ADMIN]}><Dashboard /></ProtectedRoute>} />
-            <Route path="/dashboard/manager" element={<ProtectedRoute allowedRoles={[MANAGER]}><Dashboard /></ProtectedRoute>} />
-            <Route path="/dashboard/vet" element={<ProtectedRoute allowedRoles={[VET]}><Dashboard /></ProtectedRoute>} />
-            <Route path="/dashboard/worker" element={<ProtectedRoute allowedRoles={[WORKER]}><Dashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/admin" element={<ProtectedRoute allowedRoles={[ADMIN]}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/manager" element={<ProtectedRoute allowedRoles={[MANAGER]}><ManagerDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/vet" element={<ProtectedRoute allowedRoles={[VET]}><VetDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/worker" element={<ProtectedRoute allowedRoles={[WORKER]}><WorkerDashboard /></ProtectedRoute>} />
 
             {/* Cattle management */}
             <Route path="/cattle" element={<ProtectedRoute allowedRoles={ALL}><CattleList /></ProtectedRoute>} />
