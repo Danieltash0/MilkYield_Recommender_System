@@ -14,6 +14,10 @@ import CattleList from './pages/cattle/CattleList';
 import AddCattle from './pages/cattle/AddCattle';
 import EditCattle from './pages/cattle/EditCattle';
 import CattleProfile from './pages/cattle/CattleProfile';
+import Finance from './pages/finance/Finance';
+import AddFinance from './pages/finance/AddFinance';
+import EditFinance from './pages/finance/EditFinance';
+import Reports from './pages/reports/Reports';
 
 const { ADMIN, MANAGER, VET, WORKER } = ROLES;
 const ALL = [ADMIN, MANAGER, VET, WORKER];
@@ -45,6 +49,12 @@ function App() {
             <Route path="/cattle/add" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER, WORKER]}><AddCattle /></ProtectedRoute>} />
             <Route path="/cattle/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><EditCattle /></ProtectedRoute>} />
             <Route path="/cattle/:id" element={<ProtectedRoute allowedRoles={ALL}><CattleProfile /></ProtectedRoute>} />
+
+            {/* Finance and reports */}
+            <Route path="/finance" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><Finance /></ProtectedRoute>} />
+            <Route path="/finance/add" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><AddFinance /></ProtectedRoute>} />
+            <Route path="/finance/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><EditFinance /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><Reports /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to={home} replace />} />
           </Routes>

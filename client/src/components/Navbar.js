@@ -28,6 +28,11 @@ const Navbar = () => {
           <NavLink to="/cattle" className={link}>
             Cattle
           </NavLink>
+          {(user.role === ROLES.ADMIN || user.role === ROLES.MANAGER) && (
+            <NavLink to="/finance" className={link}>
+              Finance
+            </NavLink>
+          )}
           {user.role === ROLES.ADMIN && (
             <span className="nav-soon" title="Coming in a later branch">Users</span>
           )}
