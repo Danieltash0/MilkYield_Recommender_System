@@ -59,6 +59,10 @@ const CattleProfile = () => {
         </dl>
         <div className="card-actions">
           <Link to="/cattle" className="btn btn-secondary">Back</Link>
+          <Link to={`/health?cattle_id=${cow.cattle_id}`} className="btn btn-outline">Health history</Link>
+          {hasRole(ROLES.ADMIN, ROLES.MANAGER, ROLES.VET) && (
+            <Link to={`/appointments/add?cattle=${cow.cattle_id}`} className="btn btn-outline">Book vet</Link>
+          )}
           {hasRole(ROLES.ADMIN, ROLES.MANAGER) && (
             <Link to={`/cattle/${cow.cattle_id}/edit`} className="btn btn-primary">Edit</Link>
           )}
