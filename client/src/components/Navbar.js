@@ -46,7 +46,10 @@ const Navbar = () => {
             </NavLink>
           )}
           {user.role === ROLES.ADMIN && (
-            <span className="nav-soon" title="Coming in a later branch">Users</span>
+            // /admin redirects to /admin/users; linking to it keeps the tab active on every admin page
+            <NavLink to="/admin" className={link}>
+              Admin
+            </NavLink>
           )}
         </div>
 

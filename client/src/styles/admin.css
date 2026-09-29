@@ -1,0 +1,26 @@
+/* feat/admin-management */
+.admin-tabs { display: flex; gap: 0.25rem; border-bottom: 2px solid var(--gray-border); margin-bottom: 1.25rem; overflow-x: auto; }
+.admin-tab { padding: 0.6rem 1rem; text-decoration: none; color: var(--gray-medium); font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+.admin-tab:hover { color: var(--primary-green); }
+.admin-tab.active { color: var(--primary-green); border-bottom-color: var(--primary-green); }
+
+.admin-stats { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.admin-stats .stat-value { font-size: 1.8rem; }
+
+.row-inactive td { opacity: 0.6; }
+.you { margin-left: 0.4rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--light-green); color: var(--primary-green); font-size: 0.72rem; font-weight: 700; }
+.role-tag { padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; background: var(--gray-light); color: var(--gray-dark); }
+.role-admin { background: #e2d9f3; color: #432874; }
+.role-manager { background: var(--light-green); color: var(--primary-green); }
+.role-vet { background: #cfe2ff; color: #084298; }
+.role-worker { background: #fff3cd; color: #7a5b00; }
+.status-dot::before { content: ''; display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; margin-right: 0.4rem; background: var(--gray-medium); }
+.status-dot.active::before { background: var(--secondary-green); }
+
+.log-table td.wrap { white-space: normal; min-width: 16rem; }
+.action-tag { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.8rem; background: var(--gray-light); padding: 0.1rem 0.45rem; border-radius: var(--radius-sm); }
+.pager { display: flex; justify-content: center; align-items: center; gap: 1rem; margin: 1rem 0; }
+
+.settings-group { border: 0; padding: 0; margin: 0 0 1rem; }
+.settings-group legend { font-size: 1rem; font-weight: 700; color: var(--dark-green); margin-bottom: 0.5rem; padding: 0; }
+.settings-group .muted { margin: 0.3rem 0 0; font-size: 0.8rem; }

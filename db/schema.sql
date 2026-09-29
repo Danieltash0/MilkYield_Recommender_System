@@ -174,3 +174,14 @@ CREATE TABLE IF NOT EXISTS reports (
     FOREIGN KEY (generated_by) REFERENCES users(user_id) ON DELETE SET NULL,
     INDEX idx_reports_created (created_at)
 );
+
+
+-- feat/admin-management ----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS settings (
+    setting_key VARCHAR(50) PRIMARY KEY,
+    setting_value VARCHAR(255) NULL,
+    updated_by INT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (updated_by) REFERENCES users(user_id) ON DELETE SET NULL
+);

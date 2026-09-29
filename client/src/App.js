@@ -37,6 +37,11 @@ import Finance from './pages/finance/Finance';
 import AddFinance from './pages/finance/AddFinance';
 import EditFinance from './pages/finance/EditFinance';
 import Reports from './pages/reports/Reports';
+import UserManagement from './pages/admin/UserManagement';
+import AddUser from './pages/admin/AddUser';
+import EditUser from './pages/admin/EditUser';
+import ActivityLogs from './pages/admin/ActivityLogs';
+import Settings from './pages/admin/Settings';
 
 const { ADMIN, MANAGER, VET, WORKER } = ROLES;
 const ALL = [ADMIN, MANAGER, VET, WORKER];
@@ -98,6 +103,14 @@ function App() {
             <Route path="/finance/add" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><AddFinance /></ProtectedRoute>} />
             <Route path="/finance/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><EditFinance /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><Reports /></ProtectedRoute>} />
+
+            {/* Admin panel */}
+            <Route path="/admin" element={<Navigate to="/admin/users" replace />} />
+            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={[ADMIN]}><UserManagement /></ProtectedRoute>} />
+            <Route path="/admin/users/add" element={<ProtectedRoute allowedRoles={[ADMIN]}><AddUser /></ProtectedRoute>} />
+            <Route path="/admin/users/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN]}><EditUser /></ProtectedRoute>} />
+            <Route path="/admin/logs" element={<ProtectedRoute allowedRoles={[ADMIN]}><ActivityLogs /></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={[ADMIN]}><Settings /></ProtectedRoute>} />
 
             <Route path="*" element={<Navigate to={home} replace />} />
           </Routes>

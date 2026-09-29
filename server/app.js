@@ -22,6 +22,7 @@ app.use('/api/appointments', require('./routes/appointmentRoutes'));
 app.use('/api/qr', require('./routes/qrRoutes'));
 app.use('/api/finance', require('./routes/financeRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 
