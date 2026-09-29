@@ -24,3 +24,11 @@ exports.createUser = async ({ name, email, password_hash, role }) => {
 exports.updateLastLogin = async (id) => {
   await db.execute('UPDATE users SET last_login = NOW() WHERE user_id = ?', [id]);
 };
+
+// Active non-admin accounts that work can be assigned to
+exports.getAssignableUsers = async () => {
+  const [rows] = await db.execute(
+    "SELECT user_id, name, role FROM users WHERE status = 'active' AND role <> 'admin' ORDER BY name"
+  );
+  return rows;
+};
