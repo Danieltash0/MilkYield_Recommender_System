@@ -15,3 +15,24 @@ INSERT IGNORE INTO cattle (tag_number, name, breed, health, gender, date_of_birt
 ('CT003', 'Molly',  'Ayrshire',          'Fair',      'Female', '2021-01-10', 'Young heifer, growing well',    (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
 ('CT004', 'Rosie',  'Guernsey',          'Good',      'Female', '2018-11-02', 'Calm temperament',              (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
 ('CT005', 'Duke',   'Friesian',          'Good',      'Male',   '2020-05-30', 'Breeding bull',                 (SELECT user_id FROM users WHERE email = 'admin@dairydan.com'));
+
+-- Sample milking history: 7 days x 2 sessions for each cow, so every cow has
+-- enough records for the recommender's 7-session moving average.
+-- Molly's most recent morning is deliberately low (~70% of normal) to give the
+-- anomaly flag something to catch. Dates are relative to today, and the
+-- (cattle, date, session) unique key makes INSERT IGNORE skip existing rows.
+INSERT IGNORE INTO milking_records (cattle_id, recorded_by, milking_date, session, quantity, fat_percentage)
+SELECT c.cattle_id,
+       (SELECT user_id FROM users WHERE email = 'admin@dairydan.com'),
+       CURDATE() - INTERVAL d.n DAY,
+       s.session,
+       ROUND(b.base * s.share * IF(b.tag = 'CT003' AND d.n = 0 AND s.session = 'Morning', 0.7, 1) + (d.n % 3) * 0.3, 2),
+       b.fat
+FROM cattle c
+JOIN (SELECT 'CT001' AS tag, 26 AS base, 3.6 AS fat UNION ALL
+      SELECT 'CT002', 18, 4.9 UNION ALL
+      SELECT 'CT003', 14, 3.9 UNION ALL
+      SELECT 'CT004', 20, 4.5) b ON b.tag = c.tag_number
+CROSS JOIN (SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+            UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6) d
+CROSS JOIN (SELECT 'Morning' AS session, 0.55 AS share UNION ALL SELECT 'Evening', 0.45) s;
