@@ -20,6 +20,10 @@ import CattleProfile from './pages/cattle/CattleProfile';
 import TaskList from './pages/tasks/TaskList';
 import AddTask from './pages/tasks/AddTask';
 import EditTask from './pages/tasks/EditTask';
+import MilkingRecords from './pages/milking/MilkingRecords';
+import LogMilking from './pages/milking/LogMilking';
+import EditMilking from './pages/milking/EditMilking';
+import CattleMilkHistory from './pages/milking/CattleMilkHistory';
 
 const { ADMIN, MANAGER, VET, WORKER } = ROLES;
 const ALL = [ADMIN, MANAGER, VET, WORKER];
@@ -51,6 +55,12 @@ function App() {
             <Route path="/cattle/add" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER, WORKER]}><AddCattle /></ProtectedRoute>} />
             <Route path="/cattle/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><EditCattle /></ProtectedRoute>} />
             <Route path="/cattle/:id" element={<ProtectedRoute allowedRoles={ALL}><CattleProfile /></ProtectedRoute>} />
+            <Route path="/cattle/:id/milk" element={<ProtectedRoute allowedRoles={ALL}><CattleMilkHistory /></ProtectedRoute>} />
+
+            {/* Milking records */}
+            <Route path="/milking" element={<ProtectedRoute allowedRoles={ALL}><MilkingRecords /></ProtectedRoute>} />
+            <Route path="/milking/log" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER, WORKER]}><LogMilking /></ProtectedRoute>} />
+            <Route path="/milking/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><EditMilking /></ProtectedRoute>} />
 
             {/* Tasks */}
             <Route path="/tasks" element={<ProtectedRoute allowedRoles={ALL}><TaskList /></ProtectedRoute>} />

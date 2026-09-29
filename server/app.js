@@ -16,6 +16,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/cattle', require('./routes/cattleRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
+app.use('/api/milking', require('./routes/milkingRoutes'));
 
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 
