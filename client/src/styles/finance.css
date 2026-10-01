@@ -25,8 +25,8 @@
 .category-bars { list-style: none; margin: 0.5rem 0 0; padding: 0; }
 .category-bars li { margin-bottom: 0.7rem; }
 .category-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.2rem; }
-.bar-track { height: 0.5rem; background: var(--gray-light); border-radius: 999px; overflow: hidden; }
-.bar-fill { height: 100%; background: #e4838d; border-radius: 999px; }
+.category-bars .bar-track { height: 0.5rem; background: var(--gray-light); border-radius: 999px; overflow: hidden; }
+.category-bars .bar-fill { height: 100%; background: #e4838d; border-radius: 999px; }
 
 .report-form .form-row { align-items: flex-end; }
 .report-view { border-top: 4px solid var(--primary-green); }

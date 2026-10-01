@@ -48,12 +48,25 @@ export const useTasks = (filters = {}) => {
       await fetchTasks();
     });
 
-  // Updates the one task in place so the list does not flash a loader
-  const toggleChecklistItem = (id, index) =>
-    run(async () => {
-      const { checklist } = await send(`/tasks/${id}/checklist/${index}`, 'PATCH');
-      setTasks((list) => list.map((t) => (t.task_id === id ? { ...t, checklist } : t)));
+  // Ticks the box straight away, then syncs with the server's copy (or undoes the tick if the save fails)
+  const toggleChecklistItem = (id, index) => {
+    const flip = (list) =>
+      list.map((t) =>
+        t.task_id === id
+          ? { ...t, checklist: t.checklist.map((item, i) => (i === index ? { ...item, done: !item.done } : item)) }
+          : t
+      );
+    setTasks(flip);
+    return run(async () => {
+      try {
+        const { checklist } = await send(`/tasks/${id}/checklist/${index}`, 'PATCH');
+        setTasks((list) => list.map((t) => (t.task_id === id ? { ...t, checklist } : t)));
+      } catch (err) {
+        setTasks(flip);
+        throw err;
+      }
     });
+  };
 
   const deleteTask = (id) =>
     run(async () => {
