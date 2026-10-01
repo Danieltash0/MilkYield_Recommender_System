@@ -8,6 +8,16 @@
 INSERT IGNORE INTO users (name, email, password_hash, role) VALUES
 ('Admin User', 'admin@dairydan.com', '$2b$10$/8ZWCgRUFe4IPd6.Ah9G1OmX2BK5ShmWgf353ihUDzjtoQEv4lX5G', 'admin');
 
+-- Test accounts, one or more per role. All share the password Dairy@123
+-- (credentials listed in db/testusers.txt). For local development only.
+INSERT IGNORE INTO users (name, email, password_hash, role) VALUES
+('Grace Wanjiru', 'manager@dairydan.com', '$2a$10$642fMxVQtbEYz5FPfbGFU.cxLgij5V2KuI77SfZcl8eMi5s9eQx9O', 'manager'),
+('Brian Otieno', 'vet1@dairydan.com', '$2a$10$.DRvdqVHveAyHrFIxyPX6ODnAEmX0jZhXxe5VgOU/DkJAoy2DcUVC', 'vet'),
+('Faith Chebet', 'vet2@dairydan.com', '$2a$10$qCUO8MasSKbC6DQfKRcZa.ZCNEx2jyN.X/cN0SaXpAk5M1ah2wxfi', 'vet'),
+('John Kamau', 'worker1@dairydan.com', '$2a$10$MMtBiGp2.LWbIYty6MmM0ug9vdffJGPYJ2AiBt3XHkAKqCCPelIs.', 'worker'),
+('Mercy Akinyi', 'worker2@dairydan.com', '$2a$10$j2/Dz7EW1VIUBq9rm4yB0uadPawFZonqCUeZY7sgG0yQaGh/GN0Bi', 'worker'),
+('Peter Mutua', 'worker3@dairydan.com', '$2a$10$5I3tSF//Zz0fY2Hm80SHvuNorfHKaWXkFwPkJ0/1yGny2PnX8EZH6', 'worker');
+
 -- Sample herd
 INSERT IGNORE INTO cattle (tag_number, name, breed, health, gender, date_of_birth, notes, added_by) VALUES
 ('CT001', 'Bessie', 'Holstein-Friesian', 'Good',      'Female', '2020-03-15', 'Friendly, good milk producer',  (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),

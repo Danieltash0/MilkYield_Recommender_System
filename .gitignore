@@ -1,6 +1,7 @@
 # Node modules
 client/node_modules/
 server/node_modules/
+node_modules/
 recommender/venv/
 recommender/__pycache__/
 .cache/

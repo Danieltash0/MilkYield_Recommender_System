@@ -1,0 +1,16 @@
+DairyDan test accounts (local development only)
+================================================
+
+These accounts are created by db/seed.sql (npm run db:seed).
+Log in at http://localhost:3000/login
+
+Role           Name             Email                   Password
+-------------  ---------------  ----------------------  ----------
+Admin          Admin User       admin@dairydan.com      Admin@123
+Farm Manager   Grace Wanjiru    manager@dairydan.com    Dairy@123
+Veterinarian   Brian Otieno     vet1@dairydan.com       Dairy@123
+Veterinarian   Faith Chebet     vet2@dairydan.com       Dairy@123
+Worker         John Kamau       worker1@dairydan.com    Dairy@123
+Worker         Mercy Akinyi     worker2@dairydan.com    Dairy@123
+Worker         Peter Mutua      worker3@dairydan.com    Dairy@123
+
