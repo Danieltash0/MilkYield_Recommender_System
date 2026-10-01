@@ -22,6 +22,10 @@ average forecaster with an FAO breed-baseline cold-start fallback).
    ```
    npm run db:up
    ```
+   The Docker MySQL is published on **localhost:3307** (not 3306), so it runs
+   alongside a locally installed MySQL. `server/.env.example` already sets
+   `DB_PORT=3307`; to use your local MySQL instead, set `DB_PORT=3306` and its
+   credentials in `server/.env`.
 4. Install dependencies:
    ```
    npm run install-all
