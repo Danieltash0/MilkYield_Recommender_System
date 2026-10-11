@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth, dashboardPathFor, ROLES } from '../context/AuthContext';
+import Logo from './Logo';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -17,7 +18,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-inner">
         <Link to={dashboardPathFor(user.role)} className="brand">
-          <span className="brand-mark" aria-hidden="true">D</span>
+          <Logo />
           DairyDan
         </Link>
 
