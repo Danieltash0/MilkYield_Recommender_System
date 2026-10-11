@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth, dashboardPathFor, ROLES } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -46,15 +46,29 @@ import Settings from './pages/admin/Settings';
 const { ADMIN, MANAGER, VET, WORKER } = ROLES;
 const ALL = [ADMIN, MANAGER, VET, WORKER];
 
+// Wraps every page. The section class (first URL segment, e.g. "section-cattle")
+// lets styles/backgrounds.css choose the photo behind that section's page title.
+const PageShell = ({ user, children }) => {
+  const { pathname } = useLocation();
+  const section = pathname.split('/')[1] || 'home';
+  const isLanding = !user && pathname === '/';
+  return (
+    <div className="app">
+      {user && <Navbar />}
+      <main className={`page-container section-${section}`}>{children}</main>
+      {/* The landing page has its own footer */}
+      {!isLanding && <Footer />}
+    </div>
+  );
+};
+
 function App() {
   const { user } = useAuth();
   const home = user ? dashboardPathFor(user.role) : '/';
 
   return (
     <Router>
-      <div className="app">
-        {user && <Navbar />}
-        <main className="page-container">
+      <PageShell user={user}>
           <Routes>
             {/* Public */}
             <Route path="/" element={user ? <Navigate to={home} replace /> : <Landing />} />
@@ -114,9 +128,7 @@ function App() {
 
             <Route path="*" element={<Navigate to={home} replace />} />
           </Routes>
-        </main>
-        <Footer />
-      </div>
+      </PageShell>
     </Router>
   );
 }

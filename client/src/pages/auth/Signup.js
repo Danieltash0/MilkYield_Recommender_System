@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import Logo from '../../components/Logo';
 
 // Admin accounts are never self-registered; the server enforces this too
 const ROLE_OPTIONS = ['Farm Manager', 'Veterinarian', 'Worker'];
@@ -29,10 +30,10 @@ const Signup = () => {
   };
 
   return (
-    <div className="auth-container">
+    <div className="auth-container auth-signup">
       <div className="auth-card">
         <Link to="/" className="brand auth-brand">
-          <span className="brand-mark" aria-hidden="true">D</span>
+          <Logo />
           DairyDan
         </Link>
         <h2>Create your account</h2>

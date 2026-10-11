@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles/variables.css';
 import './styles/App.css';
+import './styles/backgrounds.css';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 

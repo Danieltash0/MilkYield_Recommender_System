@@ -1,0 +1,71 @@
+/* Photo backgrounds. Every photo sits under a dark green overlay so white text
+   keeps at least 4.5:1 contrast. Images are 1600x900 WebP (see assets/images/CREDITS.md). */
+
+:root {
+  --overlay-strong: linear-gradient(rgba(20, 48, 20, 0.82), rgba(20, 48, 20, 0.82));
+  --overlay-banner: linear-gradient(90deg, rgba(20, 48, 20, 0.9) 0%, rgba(26, 61, 26, 0.72) 55%, rgba(26, 61, 26, 0.5) 100%);
+}
+
+/* ---- Login and signup -------------------------------------------------------- */
+
+.auth-container {
+  background: linear-gradient(rgba(20, 48, 20, 0.5), rgba(20, 48, 20, 0.5)),
+              url('../assets/images/cow-hillside.webp') center top / cover no-repeat, var(--dark-green);
+}
+.auth-container.auth-signup {
+  background-image: linear-gradient(rgba(20, 48, 20, 0.5), rgba(20, 48, 20, 0.5)),
+                    url('../assets/images/calves-hillside.webp');
+  background-position: center;
+}
+.auth-card { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); }
+
+/* ---- App pages: photo banner behind each page title -------------------------- */
+
+.page-header {
+  align-items: center;
+  min-height: 7rem;
+  padding: 1.5rem 1.75rem;
+  border-radius: var(--radius-lg);
+  color: var(--white);
+  background-color: var(--primary-green);
+  background-image: var(--overlay-banner), url('../assets/images/dairy-pasture.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: var(--shadow-sm);
+}
+.page-header h1 { color: var(--white); margin-bottom: 0.25rem; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
+.page-header p { margin-bottom: 0; }
+.page-header .muted { color: rgba(255, 255, 255, 0.9); }
+.page-header a:not(.btn) { color: var(--white); }
+.page-header .card-actions { margin-top: 0; }
+
+/* Buttons that sit on the banner: solid white for the main action, glass for the rest */
+.page-header .btn-primary { background: var(--white); color: var(--primary-green); }
+.page-header .btn-primary:hover:not(:disabled) { background: var(--light-green); }
+.page-header .btn-outline,
+.page-header .btn-secondary { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.85); color: var(--white); }
+.page-header .btn-outline:hover:not(:disabled),
+.page-header .btn-secondary:hover:not(:disabled) { background: rgba(255, 255, 255, 0.28); }
+
+/* One photo per section (class set by PageShell in App.js) */
+.section-dashboard .page-header { background-image: var(--overlay-banner), url('../assets/images/cattle-valley-view.webp'); background-position: center 60%; }
+.section-cattle .page-header,
+.section-scan .page-header,
+.section-qr .page-header { background-image: var(--overlay-banner), url('../assets/images/holstein-herd.webp'); background-position: center 16%; }
+.section-milking .page-header { background-image: var(--overlay-banner), url('../assets/images/dairy-barn.webp'); background-position: center 70%; }
+.section-tasks .page-header { background-image: var(--overlay-banner), url('../assets/images/holstein-calves.webp'); background-position: center 24%; }
+.section-health .page-header,
+.section-appointments .page-header { background-image: var(--overlay-banner), url('../assets/images/calves-hillside.webp'); background-position: center 35%; }
+.section-finance .page-header,
+.section-reports .page-header { background-image: var(--overlay-banner), url('../assets/images/cattle-sunset-pasture.webp'); background-position: center 70%; }
+.section-admin .page-header { background-image: var(--overlay-banner), url('../assets/images/dairy-pasture.webp'); background-position: center 75%; }
+
+@media (max-width: 640px) {
+  .page-header { min-height: 0; padding: 1.25rem 1rem; }
+}
+
+@media print {
+  .page-header { background: none; color: inherit; box-shadow: none; padding: 0; min-height: 0; }
+  .page-header h1 { color: var(--dark-green); text-shadow: none; }
+}

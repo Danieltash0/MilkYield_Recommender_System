@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import Logo from '../../components/Logo';
 
 // On success App.js redirects to the role's dashboard once `user` is set
 const Login = () => {
@@ -25,7 +26,7 @@ const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <Link to="/" className="brand auth-brand">
-          <span className="brand-mark" aria-hidden="true">D</span>
+          <Logo />
           DairyDan
         </Link>
         <h2>Welcome back</h2>

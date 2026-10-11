@@ -1,0 +1,184 @@
+/* Landing page, layout 2: light editorial. Cream hero with a photo collage, a three-step
+   strip, a sticky-heading feature list, a dark roles band and a split closing card.
+   Palette (ui-ux-pro-max): earth green with a harvest-gold call to action. Classes are lp- prefixed. */
+
+.lp {
+  --lp-accent: #a16207;          /* harvest gold: 4.9:1 against white text */
+  --lp-accent-hover: #854d0e;
+  --lp-cream: #f8f6ef;
+  --lp-ink: #143014;
+  --lp-radius: 20px;
+  --lp-shadow: 0 14px 36px rgba(20, 48, 20, 0.14);
+  background: var(--white);
+  color: var(--gray-dark);
+}
+.lp-wrap { max-width: 1140px; margin: 0 auto; padding: 0 1.25rem; }
+.lp h2 { font-size: clamp(1.6rem, 3vw, 2.15rem); letter-spacing: -0.01em; line-height: 1.2; }
+.lp-center { text-align: center; }
+.lp-kicker { margin: 0 0 0.5rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lp-accent); }
+.lp-how .lp-kicker { text-align: center; }
+
+/* ---- Buttons and links ------------------------------------------------------- */
+
+.lp-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  min-height: 44px; padding: 0.65rem 1.3rem; border: 2px solid transparent; border-radius: 12px;
+  font: inherit; font-weight: 700; text-decoration: none; cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.lp-btn .icon { transition: transform 0.2s ease; }
+.lp-btn:hover .icon { transform: translateX(3px); }
+.lp-btn:hover { transform: translateY(-1px); }
+.lp-btn-accent { background: var(--lp-accent); color: var(--white); }
+.lp-btn-accent:hover { background: var(--lp-accent-hover); }
+.lp-btn-primary { background: var(--primary-green); color: var(--white); }
+.lp-btn-primary:hover { background: var(--dark-green); }
+.lp-btn-outline { background: transparent; border-color: var(--primary-green); color: var(--primary-green); }
+.lp-btn-outline:hover { background: var(--light-green); }
+.lp-btn-lg { min-height: 52px; padding: 0.8rem 1.6rem; font-size: 1.05rem; }
+.lp-btn-sm { min-height: 40px; padding: 0.4rem 1rem; font-size: 0.92rem; }
+.lp-text-link { color: var(--primary-green); font-weight: 600; text-underline-offset: 4px; padding: 0.7rem 0; }
+
+.lp a:focus-visible, .lp-btn:focus-visible { outline: 3px solid var(--lp-accent); outline-offset: 3px; }
+
+/* ---- Top navigation ---------------------------------------------------------- */
+
+.lp-nav { position: sticky; top: 0; z-index: 100; background: rgba(248, 246, 239, 0.92); backdrop-filter: blur(8px); border-bottom: 1px solid #e7e2d3; }
+.lp-nav-inner { display: flex; justify-content: space-between; align-items: center; min-height: 64px; }
+.lp-nav nav { display: flex; align-items: center; gap: 1.5rem; }
+.lp-nav nav a:not(.lp-btn) { color: var(--gray-dark); text-decoration: none; font-weight: 600; padding: 0.5rem 0; border-bottom: 2px solid transparent; transition: border-color 0.2s ease, color 0.2s ease; }
+.lp-nav nav a:not(.lp-btn):hover { color: var(--primary-green); border-bottom-color: var(--primary-green); }
+
+/* ---- Hero ---------------------------------------------------------------------- */
+
+.lp-hero {
+  /* Translucent green over the pasture photo; the solid green is the fallback while it loads */
+  background:
+    linear-gradient(105deg, rgba(20, 48, 20, 0.86) 0%, rgba(26, 61, 26, 0.76) 55%, rgba(45, 90, 39, 0.6) 100%),
+    url('../assets/images/dairy-pasture.webp') center 60% / cover no-repeat,
+    var(--dark-green);
+  color: var(--white);
+  padding: 4.5rem 0 5.5rem;
+  overflow: hidden;
+  /* Curved lower edge */
+  border-radius: 0 0 72px 72px;
+}
+.lp-hero-inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3.5rem; align-items: center; }
+
+.lp-eyebrow { margin: 0 0 1rem; font-size: 0.82rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #d9f2dc; }
+.lp-hero h1 { color: var(--white); font-size: clamp(2.4rem, 5vw, 3.6rem); line-height: 1.08; letter-spacing: -0.025em; margin-bottom: 1.2rem; }
+.lp-accent-text { color: #fcd34d; }
+.lp-hero-sub { max-width: 33rem; font-size: 1.15rem; line-height: 1.6; color: rgba(255, 255, 255, 0.92); margin-bottom: 1.8rem; }
+.lp-hero-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+.lp-hero-note { margin: 1.1rem 0 0; font-size: 0.9rem; color: rgba(255, 255, 255, 0.82); }
+/* The outlined button sits on the photo, so it turns white */
+.lp-hero .lp-btn-outline { border-color: rgba(255, 255, 255, 0.9); color: var(--white); }
+.lp-hero .lp-btn-outline:hover { background: rgba(255, 255, 255, 0.16); }
+.lp-hero a:focus-visible, .lp-hero .lp-btn:focus-visible { outline-color: #fcd34d; }
+
+/* Two overlapping photos in mirrored leaf-shaped frames, with a small sample card */
+.lp-collage { position: relative; padding: 0 0 3.5rem 2.5rem; }
+.lp-collage img { display: block; height: auto; object-fit: cover; border: 5px solid rgba(255, 255, 255, 0.92); box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3); }
+/* Leaf: two opposite corners sweep round, the other two stay nearly square */
+.lp-collage-main { width: 100%; aspect-ratio: 5 / 4; border-radius: 18px 130px 18px 130px; }
+.lp-collage-side { position: absolute; left: 0; bottom: 0; width: 46%; aspect-ratio: 4 / 3; border-radius: 76px 14px 76px 14px; }
+.lp-collage-card { position: absolute; right: -0.5rem; bottom: 1.25rem; width: 11.5rem; background: var(--white); border-radius: 18px; padding: 0.9rem 1rem; box-shadow: var(--lp-shadow); }
+.lp-card-label { display: block; font-size: 0.75rem; color: var(--gray-medium); }
+.lp-collage-card strong { display: block; font-size: 1.6rem; line-height: 1.2; color: var(--primary-green); }
+.lp-card-bars { display: flex; align-items: flex-end; gap: 5px; height: 44px; margin-top: 0.5rem; }
+.lp-card-bars span { flex: 1; border-radius: 3px 3px 0 0; background: #cfe3d2; }
+.lp-card-bars span.is-today { background: var(--lp-accent); }
+
+/* ---- Sections ------------------------------------------------------------------ */
+
+.lp-section { padding: 4.75rem 0; }
+.lp-section-cream { background: var(--lp-cream); }
+
+/* How it works */
+.lp-steps { list-style: none; margin: 2.75rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.5rem; position: relative; }
+/* Line joining the three numbers */
+.lp-steps::before { content: ''; position: absolute; top: 1.5rem; left: 16.66%; right: 16.66%; border-top: 2px dashed #c9d8cb; }
+.lp-steps li { position: relative; text-align: center; }
+.lp-step-num { display: inline-flex; align-items: center; justify-content: center; width: 3rem; height: 3rem; margin-bottom: 1rem; border-radius: 50%; background: var(--primary-green); color: var(--white); font-weight: 800; font-size: 1.15rem; box-shadow: 0 0 0 8px var(--white); }
+.lp-steps h3 { font-size: 1.15rem; margin-bottom: 0.4rem; }
+.lp-steps p { margin: 0 auto; max-width: 19rem; color: var(--gray-medium); line-height: 1.55; }
+
+/* Features */
+.lp-features { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 4rem; align-items: start; }
+.lp-features-intro { position: sticky; top: 6rem; }
+.lp-features-intro > p:not(.lp-kicker) { color: #4b5a4c; font-size: 1.05rem; line-height: 1.6; margin: 0.9rem 0 1.5rem; }
+.lp-feature-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 2.25rem; }
+.lp-feature-list li { display: flex; gap: 0.9rem; align-items: flex-start; }
+.lp-feature-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 2.75rem; height: 2.75rem; border-radius: 12px; background: var(--white); color: var(--primary-green); box-shadow: 0 2px 8px rgba(20, 48, 20, 0.1); }
+.lp-feature-list h3 { font-size: 1.08rem; margin-bottom: 0.25rem; }
+.lp-feature-list p { margin: 0; color: var(--gray-medium); line-height: 1.55; }
+.lp-tag { display: inline-block; margin-left: 0.5rem; padding: 0.1rem 0.55rem; border-radius: 999px; background: #fef3c7; color: #854d0e; font-size: 0.7rem; font-weight: 700; vertical-align: middle; white-space: nowrap; }
+
+/* Roles */
+.lp-roles { background: var(--lp-ink); color: var(--white); }
+.lp-roles-head { display: flex; justify-content: space-between; align-items: end; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.lp-roles-head h2 { color: var(--white); margin: 0; }
+.lp-roles-head p { margin: 0; max-width: 26rem; color: rgba(255, 255, 255, 0.82); font-size: 1.05rem; }
+.lp-roles-photo { margin: 0 0 2.5rem; }
+.lp-roles-photo img { display: block; width: 100%; height: auto; aspect-ratio: 21 / 8; object-fit: cover; object-position: center 55%; border-radius: 24px; }
+.lp-roles-photo figcaption { margin-top: 0.55rem; font-size: 0.75rem; color: rgba(255, 255, 255, 0.72); }
+.lp-roles-photo figcaption a { color: inherit; }
+.lp-role-cols { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.lp-role-cols li { padding: 0 1.5rem; border-left: 1px solid rgba(255, 255, 255, 0.2); }
+.lp-role-cols li:first-child { padding-left: 0; border-left: 0; }
+.lp-role-num { display: block; margin-bottom: 0.5rem; font-weight: 800; font-size: 0.95rem; color: #fcd34d; font-variant-numeric: tabular-nums; }
+.lp-role-cols h3 { color: var(--white); font-size: 1.1rem; margin-bottom: 0.3rem; }
+.lp-role-cols p { margin: 0; color: rgba(255, 255, 255, 0.82); line-height: 1.5; }
+
+/* Closing call to action */
+.lp-cta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-radius: 28px; overflow: hidden; background: var(--lp-cream); border: 1px solid #e7e2d3; }
+.lp-cta img { display: block; width: 100%; height: 100%; min-height: 18rem; object-fit: cover; }
+.lp-cta-copy { padding: 3rem; align-self: center; }
+.lp-cta-copy h2 { color: var(--lp-ink); margin-bottom: 0.5rem; }
+.lp-cta-copy p { margin: 0 0 1.5rem; color: #4b5a4c; font-size: 1.05rem; }
+.lp-cta-actions { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+
+.lp-footer { border-top: 1px solid var(--gray-border); padding: 1.5rem 0; }
+.lp-footer-inner { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.lp-footer p { margin: 0; color: var(--gray-medium); font-size: 0.85rem; }
+
+/* ---- Responsive ------------------------------------------------------------------ */
+
+@media (max-width: 960px) {
+  .lp-hero { padding: 3.25rem 0 4rem; border-radius: 0 0 48px 48px; }
+  .lp-hero-inner { grid-template-columns: 1fr; gap: 2.75rem; }
+  .lp-collage { max-width: 34rem; }
+  .lp-collage-card { right: 0; }
+  .lp-features { grid-template-columns: 1fr; gap: 2.25rem; }
+  .lp-features-intro { position: static; }
+  .lp-role-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.75rem 0; }
+  .lp-role-cols li:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .lp-nav nav a[href^='#'] { display: none; }
+}
+
+@media (max-width: 640px) {
+  .lp-nav nav { gap: 0.9rem; }
+  .lp-section { padding: 3.25rem 0; }
+  .lp-hero-actions .lp-btn { width: 100%; }
+  .lp-hero { border-radius: 0 0 32px 32px; }
+  .lp-collage { padding: 0 0 2.75rem 1.25rem; }
+  .lp-collage-main { border-radius: 14px 84px 14px 84px; }
+  .lp-collage-side { border-radius: 48px 10px 48px 10px; }
+  .lp-collage-card { width: 9.5rem; padding: 0.7rem 0.8rem; }
+  .lp-steps { grid-template-columns: 1fr; gap: 2rem; }
+  .lp-steps::before { display: none; }
+  .lp-feature-list { grid-template-columns: 1fr; gap: 1.5rem; }
+  .lp-roles-photo img { aspect-ratio: 16 / 9; }
+  .lp-role-cols { grid-template-columns: 1fr; gap: 0; }
+  .lp-role-cols li { padding: 1rem 0; border-left: 0; border-top: 1px solid rgba(255, 255, 255, 0.2); }
+  .lp-role-cols li:first-child { border-top: 0; padding-top: 0; }
+  .lp-cta { grid-template-columns: 1fr; }
+  .lp-cta img { min-height: 0; aspect-ratio: 16 / 9; }
+  .lp-cta-copy { padding: 1.75rem 1.5rem 2rem; }
+  .lp-cta-actions .lp-btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-btn, .lp-btn .icon { transition: none; }
+  .lp-btn:hover, .lp-btn:hover .icon { transform: none; }
+}
