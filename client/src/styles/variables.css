@@ -1,23 +1,40 @@
+/* Design tokens (ui-ux-pro-max: earth green + harvest gold, Plus Jakarta Sans).
+   The older names (--primary-green, --gray-*) are kept so every feature stylesheet
+   picks up the new palette without changes. */
 :root {
-  /* Palette carried over from the COWCO design */
-  --primary-green: #2d5a27;
-  --secondary-green: #4a7c59;
-  --light-green: #e8f5e8;
-  --dark-green: #1a3d1a;
-  --white: #ffffff;
-  --gray-light: #f8f9fa;
-  --gray-border: #dee2e6;
-  --gray-medium: #6c757d;
-  --gray-dark: #343a40;
-  --red: #dc3545;
-  --orange: #fd7e14;
-  --yellow: #ffc107;
+  /* Brand */
+  --primary-green: #15803d;   /* 5.0:1 against white */
+  --secondary-green: #16a34a; /* bars, dots, focus rings (non-text) */
+  --light-green: #ecfdf3;
+  --dark-green: #14532d;
+  --accent: #a16207;          /* harvest gold, 4.9:1 against white */
+  --accent-soft: #fef3c7;
 
-  --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.08);
-  --transition: 0.2s ease-in-out;
+  /* Neutrals (slightly green-tinted slate) */
+  --white: #ffffff;
+  --gray-light: #f4f7f5;
+  --gray-border: #e2e8e4;
+  --gray-medium: #5b6b62;     /* 5.5:1 against white */
+  --gray-dark: #1c2a22;
+  --surface: #ffffff;
+  --page-bg: #f6f8f7;
+
+  /* Status */
+  --red: #dc2626;
+  --orange: #ea580c;
+  --yellow: #ca8a04;
+
+  /* Sidebar */
+  --sidebar-bg: #0f2a1a;
+  --sidebar-width: 248px;
+
+  --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(16, 40, 24, 0.05), 0 1px 3px rgba(16, 40, 24, 0.06);
+  --shadow-md: 0 8px 24px rgba(16, 40, 24, 0.10);
+  --shadow-lg: 0 20px 48px rgba(16, 40, 24, 0.18);
+  --ring: 0 0 0 3px rgba(22, 163, 74, 0.28);
+  --transition: 0.18s ease;
 }

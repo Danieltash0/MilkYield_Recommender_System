@@ -53,11 +53,13 @@ const PageShell = ({ user, children }) => {
   const section = pathname.split('/')[1] || 'home';
   const isLanding = !user && pathname === '/';
   return (
-    <div className="app">
+    <div className={user ? 'app app-shell' : 'app'}>
       {user && <Navbar />}
-      <main className={`page-container section-${section}`}>{children}</main>
-      {/* The landing page has its own footer */}
-      {!isLanding && <Footer />}
+      <div className="app-main">
+        <main className={`page-container section-${section}`}>{children}</main>
+        {/* The landing page has its own footer */}
+        {!isLanding && <Footer />}
+      </div>
     </div>
   );
 };

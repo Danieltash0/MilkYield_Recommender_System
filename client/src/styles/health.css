@@ -10,18 +10,21 @@
 .due { color: var(--red); font-weight: 700; }
 
 .type-tag { display: inline-block; padding: 0.1rem 0.55rem; border-radius: var(--radius-md); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; background: var(--gray-light); color: var(--gray-medium); }
-.type-illness, .type-injury { background: #f8d7da; color: #842029; }
-.type-treatment { background: #fff3cd; color: #7a5b00; }
-.type-vaccination { background: #cfe2ff; color: #084298; }
+.type-illness, .type-injury { background: #fee2e2; color: #991b1b; }
+.type-treatment { background: #fef9c3; color: #854d0e; }
+.type-vaccination { background: #dbeafe; color: #1e40af; }
 .type-checkup { background: var(--light-green); color: var(--primary-green); }
 
-.segmented { display: inline-flex; border: 1px solid var(--gray-border); border-radius: var(--radius-md); overflow: hidden; background: var(--white); }
-.segmented button { border: 0; background: transparent; padding: 0.5rem 1rem; font: inherit; font-weight: 600; color: var(--gray-medium); cursor: pointer; }
-.segmented button.active { background: var(--primary-green); color: var(--white); }
+.segmented { display: inline-flex; gap: 0.2rem; padding: 0.2rem; border-radius: 12px; background: #eaefec; }
+.segmented button { border: 0; background: transparent; min-height: 36px; padding: 0.4rem 1rem; border-radius: 9px; font: inherit; font-size: 0.88rem; font-weight: 600; color: var(--gray-medium); cursor: pointer; transition: background-color var(--transition), color var(--transition); }
+.segmented button:hover { color: var(--gray-dark); }
+.segmented button.active { background: var(--white); color: var(--primary-green); box-shadow: var(--shadow-sm); }
 .inline-check { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0; font-weight: 500; }
 .inline-check input { width: auto; }
 
 .appointment { display: grid; grid-template-columns: 11rem 1fr auto; gap: 1rem; align-items: center; border-left: 4px solid var(--secondary-green); }
+.record-list > .card { transition: box-shadow var(--transition); }
+.record-list > .card:hover { box-shadow: var(--shadow-md); }
 .appt-completed { border-left-color: var(--gray-border); opacity: 0.8; }
 .appt-cancelled { border-left-color: var(--gray-border); opacity: 0.6; }
 .appt-cancelled h3 { text-decoration: line-through; }

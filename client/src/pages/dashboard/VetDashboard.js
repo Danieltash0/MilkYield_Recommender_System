@@ -14,9 +14,9 @@ const VetDashboard = () => {
       {error && <div className="alert alert-error">{error}</div>}
 
       <div className="stat-grid">
-        <StatCard label="Poor health" value={s.byHealth.Poor} loading={loading} hint="Check these first" />
-        <StatCard label="Fair health" value={s.byHealth.Fair} loading={loading} />
-        <StatCard label="Cattle in herd" value={s.total} loading={loading} />
+        <StatCard label="Poor health" icon="pulse" value={s.byHealth.Poor} loading={loading} hint="Check these first" />
+        <StatCard label="Fair health" icon="pulse" value={s.byHealth.Fair} loading={loading} />
+        <StatCard label="Cattle in herd" icon="tag" value={s.total} loading={loading} />
       </div>
 
       <div className="dash-grid">

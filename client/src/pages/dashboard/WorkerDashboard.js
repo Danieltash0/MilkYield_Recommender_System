@@ -19,8 +19,8 @@ const WorkerDashboard = () => {
       </QuickActions>
 
       <div className="stat-grid">
-        <StatCard label="Cattle in herd" value={s.total} loading={loading} />
-        <StatCard label="Need attention" value={s.needAttention.length} loading={loading} hint="Report these to the vet" />
+        <StatCard label="Cattle in herd" icon="tag" value={s.total} loading={loading} />
+        <StatCard label="Need attention" icon="pulse" value={s.needAttention.length} loading={loading} hint="Report these to the vet" />
       </div>
 
       <div className="dash-grid">

@@ -14,9 +14,9 @@ const ManagerDashboard = () => {
       {error && <div className="alert alert-error">{error}</div>}
 
       <div className="stat-grid">
-        <StatCard label="Cattle in herd" value={s.total} loading={loading} />
-        <StatCard label="Milking herd" value={s.females} loading={loading} hint="Female cattle" />
-        <StatCard label="Need attention" value={s.needAttention.length} loading={loading} hint="Health rated Fair or Poor" />
+        <StatCard label="Cattle in herd" icon="tag" value={s.total} loading={loading} />
+        <StatCard label="Milking herd" icon="drop" value={s.females} loading={loading} hint="Female cattle" />
+        <StatCard label="Need attention" icon="pulse" value={s.needAttention.length} loading={loading} hint="Health rated Fair or Poor" />
       </div>
 
       <div className="dash-grid">

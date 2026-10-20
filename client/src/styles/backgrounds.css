@@ -2,70 +2,64 @@
    keeps at least 4.5:1 contrast. Images are 1600x900 WebP (see assets/images/CREDITS.md). */
 
 :root {
-  --overlay-strong: linear-gradient(rgba(20, 48, 20, 0.82), rgba(20, 48, 20, 0.82));
-  --overlay-banner: linear-gradient(90deg, rgba(20, 48, 20, 0.9) 0%, rgba(26, 61, 26, 0.72) 55%, rgba(26, 61, 26, 0.5) 100%);
+  --overlay-strong: linear-gradient(rgba(15, 42, 26, 0.82), rgba(15, 42, 26, 0.82));
+  --overlay-banner: linear-gradient(100deg, rgba(12, 36, 22, 0.94) 0%, rgba(15, 42, 26, 0.8) 50%, rgba(20, 83, 45, 0.45) 100%);
 }
 
-/* ---- Login and signup -------------------------------------------------------- */
+/* ---- Login and signup: photo panel on the left, form panel on the right -------- */
 
 .auth-container {
-  background: linear-gradient(rgba(20, 48, 20, 0.5), rgba(20, 48, 20, 0.5)),
-              url('../assets/images/cow-hillside.webp') center top / cover no-repeat, var(--dark-green);
+  position: relative;
+  background: linear-gradient(rgba(15, 42, 26, 0.55), rgba(15, 42, 26, 0.55)),
+              url('../assets/images/cow-hillside.webp') center top / cover no-repeat, var(--sidebar-bg);
 }
 .auth-container.auth-signup {
-  background-image: linear-gradient(rgba(20, 48, 20, 0.5), rgba(20, 48, 20, 0.5)),
+  background-image: linear-gradient(rgba(15, 42, 26, 0.55), rgba(15, 42, 26, 0.55)),
                     url('../assets/images/calves-hillside.webp');
   background-position: center;
 }
-.auth-card { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); }
 
-/* ---- App pages: photo banner behind each page title -------------------------- */
-
-.page-header {
-  align-items: center;
-  min-height: 7rem;
-  padding: 1.5rem 1.75rem;
-  border-radius: var(--radius-lg);
-  color: var(--white);
-  background-color: var(--primary-green);
-  background-image: var(--overlay-banner), url('../assets/images/dairy-pasture.webp');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  box-shadow: var(--shadow-sm);
+@media (min-width: 1024px) {
+  .auth-container { justify-content: flex-end; align-items: stretch; padding: 0; }
+  /* Tagline over the photo half */
+  .auth-container::before {
+    content: 'Know every cow. Grow every litre.';
+    position: absolute; left: 3.5rem; bottom: 3.5rem; max-width: 22rem;
+    color: var(--white); font-size: 2.2rem; font-weight: 800; line-height: 1.12; letter-spacing: -0.025em;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  }
+  .auth-card {
+    max-width: 540px; border-radius: 0; box-shadow: -24px 0 48px rgba(0, 0, 0, 0.18);
+    display: flex; flex-direction: column; justify-content: center; padding: 3rem 4.5rem;
+  }
+  .auth-card.center { align-items: center; }
 }
-.page-header h1 { color: var(--white); margin-bottom: 0.25rem; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
-.page-header p { margin-bottom: 0; }
-.page-header .muted { color: rgba(255, 255, 255, 0.9); }
-.page-header a:not(.btn) { color: var(--white); }
-.page-header .card-actions { margin-top: 0; }
 
-/* Buttons that sit on the banner: solid white for the main action, glass for the rest */
-.page-header .btn-primary { background: var(--white); color: var(--primary-green); }
-.page-header .btn-primary:hover:not(:disabled) { background: var(--light-green); }
-.page-header .btn-outline,
-.page-header .btn-secondary { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.85); color: var(--white); }
-.page-header .btn-outline:hover:not(:disabled),
-.page-header .btn-secondary:hover:not(:disabled) { background: rgba(255, 255, 255, 0.28); }
+/* ---- Dashboards: photo hero behind the greeting -------------------------------- */
 
-/* One photo per section (class set by PageShell in App.js) */
-.section-dashboard .page-header { background-image: var(--overlay-banner), url('../assets/images/cattle-valley-view.webp'); background-position: center 60%; }
-.section-cattle .page-header,
-.section-scan .page-header,
-.section-qr .page-header { background-image: var(--overlay-banner), url('../assets/images/holstein-herd.webp'); background-position: center 16%; }
-.section-milking .page-header { background-image: var(--overlay-banner), url('../assets/images/dairy-barn.webp'); background-position: center 70%; }
-.section-tasks .page-header { background-image: var(--overlay-banner), url('../assets/images/holstein-calves.webp'); background-position: center 24%; }
-.section-health .page-header,
-.section-appointments .page-header { background-image: var(--overlay-banner), url('../assets/images/calves-hillside.webp'); background-position: center 35%; }
-.section-finance .page-header,
-.section-reports .page-header { background-image: var(--overlay-banner), url('../assets/images/cattle-sunset-pasture.webp'); background-position: center 70%; }
-.section-admin .page-header { background-image: var(--overlay-banner), url('../assets/images/dairy-pasture.webp'); background-position: center 75%; }
+.page-header.hero {
+  align-items: center;
+  min-height: 9.5rem;
+  padding: 1.75rem 2rem;
+  border-radius: 18px;
+  color: var(--white);
+  background-color: var(--sidebar-bg);
+  background-image: var(--overlay-banner), url('../assets/images/cattle-valley-view.webp');
+  background-size: cover;
+  background-position: center 60%;
+  background-repeat: no-repeat;
+  box-shadow: var(--shadow-md);
+}
+.page-header.hero h1 { color: var(--white); font-size: 1.9rem; }
+.page-header.hero .eyebrow { color: #86efac; }
+.page-header.hero .muted { color: rgba(255, 255, 255, 0.88); font-size: 0.95rem; }
 
 @media (max-width: 640px) {
-  .page-header { min-height: 0; padding: 1.25rem 1rem; }
+  .page-header.hero { min-height: 0; padding: 1.4rem 1.25rem; border-radius: 14px; }
+  .page-header.hero h1 { font-size: 1.5rem; }
 }
 
 @media print {
-  .page-header { background: none; color: inherit; box-shadow: none; padding: 0; min-height: 0; }
-  .page-header h1 { color: var(--dark-green); text-shadow: none; }
+  .page-header.hero { background: none; color: inherit; box-shadow: none; padding: 0; min-height: 0; }
+  .page-header.hero h1 { color: var(--dark-green); }
 }

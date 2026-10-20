@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { healthClass } from '../../components/CattleCard';
+import Icon from '../../components/Icon';
 
 export const HEALTH_LEVELS = ['Excellent', 'Good', 'Fair', 'Poor'];
 
@@ -32,18 +33,26 @@ export const herdStats = (cattle) => {
 export const DashboardHeader = ({ tagline }) => {
   const { user } = useAuth();
   return (
-    <div className="page-header">
+    // `hero` keeps the photo banner on dashboards; other pages use a plain title row
+    <div className="page-header hero">
       <div>
+        <p className="eyebrow">{today()} · {user.role}</p>
         <h1>Hello, {user.name.split(' ')[0]}</h1>
-        <p className="muted">{user.role} · {tagline}</p>
+        <p className="muted">{tagline}</p>
       </div>
     </div>
   );
 };
 
-export const StatCard = ({ label, value, loading, hint }) => (
+const today = () =>
+  new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+
+export const StatCard = ({ label, value, loading, hint, icon }) => (
   <div className="card stat">
-    <span className="stat-label">{label}</span>
+    <div className="stat-top">
+      <span className="stat-label">{label}</span>
+      {icon && <span className="stat-icon"><Icon name={icon} size={20} /></span>}
+    </div>
     <span className="stat-value">{loading ? '…' : value}</span>
     {hint && <span className="muted">{hint}</span>}
   </div>

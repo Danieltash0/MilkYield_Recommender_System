@@ -1,5 +1,5 @@
 /* feat/qr-identification */
-.alert-success { background: var(--light-green); color: var(--dark-green); border: 1px solid #b7dfc0; }
+.alert-success { background: var(--light-green); color: var(--dark-green); border: 1px solid #bbf7d0; }
 .mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: 0.03em; }
 .qr-hidden { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 

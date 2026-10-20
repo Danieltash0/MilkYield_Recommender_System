@@ -14,10 +14,10 @@ const AdminDashboard = () => {
       {error && <div className="alert alert-error">{error}</div>}
 
       <div className="stat-grid">
-        <StatCard label="Cattle in herd" value={s.total} loading={loading} />
-        <StatCard label="Females / Males" value={`${s.females} / ${s.males}`} loading={loading} />
-        <StatCard label="Registered this month" value={s.addedThisMonth} loading={loading} hint="Last 30 days" />
-        <StatCard label="Need attention" value={s.needAttention.length} loading={loading} hint="Health rated Fair or Poor" />
+        <StatCard label="Cattle in herd" icon="tag" value={s.total} loading={loading} />
+        <StatCard label="Females / Males" icon="drop" value={`${s.females} / ${s.males}`} loading={loading} />
+        <StatCard label="Registered this month" icon="trend" value={s.addedThisMonth} loading={loading} hint="Last 30 days" />
+        <StatCard label="Need attention" icon="pulse" value={s.needAttention.length} loading={loading} hint="Health rated Fair or Poor" />
       </div>
 
       <div className="dash-grid">

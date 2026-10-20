@@ -1,68 +1,98 @@
-import React from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, dashboardPathFor, ROLES } from '../context/AuthContext';
 import Logo from './Logo';
+import Icon from './Icon';
 
+// App navigation. A fixed sidebar on desktop; below 1024px it collapses into a
+// top bar whose menu button slides the same sidebar in as a drawer.
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
+
+  // Close the drawer after navigating, and on Escape
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
 
   const handleLogout = async () => {
     await logout();
     navigate('/');
   };
 
+  const isAdmin = user.role === ROLES.ADMIN;
+  const canSeeFinance = isAdmin || user.role === ROLES.MANAGER;
+  const home = dashboardPathFor(user.role);
+
+  const items = [
+    { to: home, label: 'Dashboard', icon: 'grid' },
+    { to: '/cattle', label: 'Cattle', icon: 'tag' },
+    { to: '/milking', label: 'Milking', icon: 'drop' },
+    { to: '/tasks', label: 'Tasks', icon: 'checklist' },
+    { to: '/health', label: 'Health', icon: 'pulse' },
+    { to: '/scan', label: 'Scan QR', icon: 'qr' },
+    canSeeFinance && { to: '/finance', label: 'Finance', icon: 'wallet' },
+    // /admin redirects to /admin/users; linking to it keeps the item active on every admin page
+    isAdmin && { to: '/admin', label: 'Admin', icon: 'shield' }
+  ].filter(Boolean);
+
   const link = ({ isActive }) => (isActive ? 'nav-link active' : 'nav-link');
+  const initials = user.name.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
 
   return (
-    <nav className="navbar">
-      <div className="navbar-inner">
-        <Link to={dashboardPathFor(user.role)} className="brand">
-          <Logo />
-          DairyDan
-        </Link>
+    <>
+      <header className="topbar">
+        <button
+          className="icon-btn"
+          onClick={() => setOpen(true)}
+          aria-label="Open menu"
+          aria-expanded={open}
+          aria-controls="app-sidebar"
+        >
+          <Icon name="menu" size={22} />
+        </button>
+        <Link to={home} className="brand"><Logo />DairyDan</Link>
+        <span className="avatar avatar-sm" aria-hidden="true">{initials}</span>
+      </header>
 
-        <div className="nav-menu">
-          <NavLink to={dashboardPathFor(user.role)} className={link}>
-            Dashboard
-          </NavLink>
-          <NavLink to="/cattle" className={link}>
-            Cattle
-          </NavLink>
-          <NavLink to="/tasks" className={link}>
-            Tasks
-          </NavLink>
-          <NavLink to="/milking" className={link}>
-            Milking
-          </NavLink>
-          <NavLink to="/health" className={link}>
-            Health
-          </NavLink>
-          <NavLink to="/scan" className={link}>
-            Scan
-          </NavLink>
-          {(user.role === ROLES.ADMIN || user.role === ROLES.MANAGER) && (
-            <NavLink to="/finance" className={link}>
-              Finance
-            </NavLink>
-          )}
-          {user.role === ROLES.ADMIN && (
-            // /admin redirects to /admin/users; linking to it keeps the tab active on every admin page
-            <NavLink to="/admin" className={link}>
-              Admin
-            </NavLink>
-          )}
-        </div>
+      {open && <div className="sidebar-backdrop" onClick={() => setOpen(false)} />}
 
-        <div className="nav-user">
-          <span className="user-name">{user.name}</span>
-          <span className="role-pill">{user.role}</span>
-          <button onClick={handleLogout} className="btn btn-outline btn-sm">
-            Logout
+      <aside id="app-sidebar" className={`sidebar${open ? ' open' : ''}`}>
+        <div className="sidebar-head">
+          <Link to={home} className="brand brand-light"><Logo />DairyDan</Link>
+          <button className="icon-btn sidebar-close" onClick={() => setOpen(false)} aria-label="Close menu">
+            <Icon name="close" size={20} />
           </button>
         </div>
-      </div>
-    </nav>
+
+        <nav className="nav-menu" aria-label="Main">
+          <span className="nav-section">Menu</span>
+          {items.map((i) => (
+            <NavLink key={i.to} to={i.to} className={link}>
+              <Icon name={i.icon} size={20} />
+              <span>{i.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="nav-user">
+          <span className="avatar" aria-hidden="true">{initials}</span>
+          <div className="nav-user-text">
+            <span className="user-name">{user.name}</span>
+            <span className="user-role">{user.role}</span>
+          </div>
+          <button onClick={handleLogout} className="icon-btn" aria-label="Log out" title="Log out">
+            <Icon name="logout" size={20} />
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };
 
