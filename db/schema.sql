@@ -23,13 +23,19 @@ CREATE TABLE IF NOT EXISTS cattle (
     breed VARCHAR(100),
     health ENUM('Excellent', 'Good', 'Fair', 'Poor') DEFAULT 'Good',
     gender ENUM('Female', 'Male') DEFAULT 'Female',
+    category ENUM('Calf', 'Heifer', 'Cow', 'Bull') NULL DEFAULT 'Cow',
     date_of_birth DATE NULL,
+    last_calving_date DATE NULL,
+    parity TINYINT UNSIGNED NULL,
+    conception_date DATE NULL,
+    prev_lactation_yield_l DECIMAL(8,1) NULL,
     notes TEXT NULL,
     added_by INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (added_by) REFERENCES users(user_id) ON DELETE SET NULL,
     INDEX idx_cattle_health (health),
-    INDEX idx_cattle_gender (gender)
+    INDEX idx_cattle_gender (gender),
+    INDEX idx_cattle_category (category)
 );
 
 CREATE TABLE IF NOT EXISTS activity_logs (
@@ -184,4 +190,100 @@ CREATE TABLE IF NOT EXISTS settings (
     updated_by INT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (updated_by) REFERENCES users(user_id) ON DELETE SET NULL
+);
+
+
+-- feat/recommender ----------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS feed_records (
+    feed_id INT AUTO_INCREMENT PRIMARY KEY,
+    cattle_id INT NOT NULL,
+    fed_on DATE NOT NULL,
+    concentrate_kg DECIMAL(5,2) NOT NULL DEFAULT 0,
+    forage_kg DECIMAL(6,2) NULL,
+    notes VARCHAR(255) NULL,
+    recorded_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cattle_id) REFERENCES cattle(cattle_id) ON DELETE CASCADE,
+    FOREIGN KEY (recorded_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    UNIQUE KEY uq_feed_day (cattle_id, fed_on),
+    INDEX idx_feed_date (fed_on)
+);
+
+-- Litres per DAY; the recommender divides by MILKINGS_PER_DAY
+CREATE TABLE IF NOT EXISTS breed_yield_baselines (
+    baseline_id INT AUTO_INCREMENT PRIMARY KEY,
+    breed VARCHAR(100) NOT NULL,
+    avg_daily_yield DECIMAL(5,2) NOT NULL,
+    source VARCHAR(255) NULL,
+    UNIQUE KEY uq_baseline_breed (breed)
+);
+
+-- Reference data the cold-start fallback needs, so it lives here as well as in
+-- seed.sql. Cited figures scaled to Kenyan smallholder levels, in L/day.
+INSERT IGNORE INTO breed_yield_baselines (breed, avg_daily_yield, source) VALUES
+('Holstein-Friesian', 15.75, 'FarmKenya/Standard Media 2020: 45 L/day well-managed x 0.35 for Kenyan smallholder farms'),
+('Friesian',          15.75, 'FarmKenya/Standard Media 2020: 45 L/day well-managed x 0.35 for Kenyan smallholder farms'),
+('Ayrshire',          10.50, 'FarmKenya/Standard Media 2020: 30 L/day well-managed x 0.35 for Kenyan smallholder farms'),
+('Guernsey',           8.75, 'FarmKenya/Standard Media 2020: 25 L/day well-managed x 0.35 for Kenyan smallholder farms'),
+('Jersey',             7.00, 'FarmKenya/Standard Media 2020: 20 L/day well-managed x 0.35 for Kenyan smallholder farms'),
+('Sahiwal',            5.50, 'FarmKenya 2020: 10 L/day x 0.55; ILRI AGTR commercial herds average ~5.4 L/day'),
+('Boran',              4.50, 'ILRI AGTR (Muguga and Ngong herd records)'),
+('Zebu',               1.60, 'Cambridge Animal Genetic Resources, SEAZ on-farm characterization, SE Kenya (2011)'),
+('Crossbreed',         8.00, 'USDA FAS GAIN Kenya Dairy 2024 (7.6 L/day); Ajak et al. 2020, Nyeri (10.7 L/day)'),
+('Other',              8.00, 'USDA FAS GAIN Kenya Dairy 2024 (7.6 L/day); Ajak et al. 2020, Nyeri (10.7 L/day)');
+
+-- Cold-start knowledge graph: conditions on a cow and the yield multiplier
+-- each implies. See db/migrations/2026-10-27_yield_factors_knowledge_graph.sql.
+CREATE TABLE IF NOT EXISTS yield_factors (
+    factor_id INT AUTO_INCREMENT PRIMARY KEY,
+    factor_key VARCHAR(50) NOT NULL,
+    attribute VARCHAR(30) NOT NULL,
+    min_value DECIMAL(8,2) NULL,
+    max_value DECIMAL(8,2) NULL,
+    multiplier DECIMAL(4,2) NOT NULL,
+    label VARCHAR(100) NOT NULL,
+    source VARCHAR(255) NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    UNIQUE KEY uq_yield_factor_key (factor_key)
+);
+
+INSERT IGNORE INTO yield_factors (factor_key, attribute, min_value, max_value, multiplier, label, source) VALUES
+('stage_fresh',       'days_in_milk',     0,   15, 0.99, 'just calved',                    'Wood (1967) lactation curve, as used for the synthetic training herd'),
+('stage_rising',      'days_in_milk',    15,   45, 1.22, 'rising towards peak lactation',  'Wood (1967) lactation curve, as used for the synthetic training herd'),
+('stage_peak',        'days_in_milk',    45,  100, 1.23, 'peak lactation',                 'Wood (1967) lactation curve, as used for the synthetic training herd'),
+('stage_mid',         'days_in_milk',   100,  200, 1.05, 'mid lactation',                  'Wood (1967) lactation curve, as used for the synthetic training herd'),
+('stage_late',        'days_in_milk',   200,  305, 0.77, 'late lactation',                 'Wood (1967) lactation curve, as used for the synthetic training herd'),
+('stage_extended',    'days_in_milk',   305, NULL, 0.65, 'extended lactation',             'Wood (1967) lactation curve, as used for the synthetic training herd'),
+('parity_first',      'parity',           1,    2, 0.80, 'first lactation',                'First-lactation cows give about 80% of mature yield (mature-equivalent convention)'),
+('parity_second',     'parity',           2,    3, 0.93, 'second lactation',               'Second-lactation cows give about 93% of mature yield (mature-equivalent convention)'),
+('pregnancy_mid',     'days_pregnant',  120,  180, 0.94, 'pregnancy past four months',     'Yield falls about 0.2% a day after day 120 of pregnancy, as in the synthetic training herd'),
+('pregnancy_late',    'days_pregnant',  180,  240, 0.82, 'late pregnancy',                 'Yield falls about 0.2% a day after day 120 of pregnancy, as in the synthetic training herd'),
+('pregnancy_dry',     'days_pregnant',  240, NULL, 0.72, 'close to drying off',            'Yield falls about 0.2% a day after day 120 of pregnancy, as in the synthetic training herd'),
+('feed_low',          'concentrate_kg',   0,    1, 0.93, 'little concentrate fed',         'About 5% yield per kg of concentrate around 2 kg/day, as in the synthetic training herd'),
+('feed_high',         'concentrate_kg',   3,    5, 1.10, 'extra concentrate fed',          'About 5% yield per kg of concentrate around 2 kg/day, as in the synthetic training herd'),
+('feed_very_high',    'concentrate_kg',   5, NULL, 1.20, 'heavy concentrate feeding',      'About 5% yield per kg of concentrate around 2 kg/day, as in the synthetic training herd'),
+('health_recent',     'health_active',    1, NULL, 0.85, 'illness or treatment this week', 'Sick days give 75% and the following week 90%, as in the synthetic training herd'),
+('age_old',           'age_months',     120, NULL, 0.94, 'older cow',                      'Yield falls about 0.2% a month after 90 months of age, as in the synthetic training herd');
+
+CREATE TABLE IF NOT EXISTS milk_yield_predictions (
+    prediction_id INT AUTO_INCREMENT PRIMARY KEY,
+    cattle_id INT NOT NULL,
+    record_id INT NOT NULL,
+    milking_date DATE NOT NULL,
+    session ENUM('Morning', 'Afternoon', 'Evening') NOT NULL,
+    expected_litres DECIMAL(6,2) NOT NULL,
+    actual_litres DECIMAL(6,2) NULL,
+    ratio DECIMAL(6,3) NULL,
+    method VARCHAR(30) NOT NULL,
+    status ENUM('normal', 'low', 'high', 'suppressed') NOT NULL DEFAULT 'normal',
+    reason VARCHAR(100) NULL,
+    message TEXT NULL,
+    model_source VARCHAR(20) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cattle_id) REFERENCES cattle(cattle_id) ON DELETE CASCADE,
+    FOREIGN KEY (record_id) REFERENCES milking_records(record_id) ON DELETE CASCADE,
+    UNIQUE KEY uq_prediction_record (record_id),
+    INDEX idx_predictions_cattle (cattle_id, milking_date),
+    INDEX idx_predictions_status (status, milking_date)
 );

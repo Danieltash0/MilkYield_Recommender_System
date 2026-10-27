@@ -5,6 +5,7 @@ import { useCattle } from '../../api/useCattle';
 import { healthClass } from '../../components/CattleCard';
 import Loader from '../../components/Loader';
 import CattleQR from '../../components/CattleQR';
+import YieldInsight from '../../components/YieldInsight';
 
 const fmt = (d) => (d ? new Date(d + 'T00:00:00').toLocaleDateString() : 'Not specified');
 
@@ -54,13 +55,14 @@ const CattleProfile = () => {
         <dl className="details">
           <div><dt>Breed</dt><dd>{cow.breed || '—'}</dd></div>
           <div><dt>Gender</dt><dd>{cow.gender}</dd></div>
+          <div><dt>Category</dt><dd>{cow.category || '—'}</dd></div>
           <div><dt>Date of birth</dt><dd>{fmt(cow.date_of_birth)}{age && ` (${age})`}</dd></div>
           <div><dt>Registered</dt><dd>{new Date(cow.created_at.replace(' ', 'T')).toLocaleDateString()}</dd></div>
           <div className="full"><dt>Notes</dt><dd>{cow.notes || '—'}</dd></div>
         </dl>
         <div className="card-actions">
           <Link to="/cattle" className="btn btn-secondary">Back</Link>
-          {cow.gender === 'Female' && (
+          {cow.category === 'Cow' && (
             <Link to={`/cattle/${cow.cattle_id}/milk`} className="btn btn-outline">Milk history</Link>
           )}
           <Link to={`/health?cattle_id=${cow.cattle_id}`} className="btn btn-outline">Health history</Link>
@@ -72,6 +74,8 @@ const CattleProfile = () => {
           )}
         </div>
       </div>
+
+      {cow.category === 'Cow' && <YieldInsight cattleId={cow.cattle_id} />}
 
       <CattleQR cow={cow} />
     </div>

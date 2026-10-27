@@ -1,0 +1,156 @@
+{
+  "trained_on": "2026-10-27",
+  "dataset": {
+    "file": "cattle_milk_yield_1000.csv",
+    "rows": 1000,
+    "cows": 1000,
+    "train_rows": 800,
+    "test_rows": 200,
+    "yield_mean": 12.4145,
+    "yield_std": 4.42486827026627,
+    "yield_min": 5.0,
+    "yield_max": 20.0
+  },
+  "baselines_file": "breed_yield_baselines.csv",
+  "before": {
+    "breed_baseline_placeholder": {
+      "mae": 4.6080000000000005,
+      "rmse": 5.50637811996234,
+      "mape": 43.76856416020297,
+      "r2": -0.530686528573266
+    },
+    "breed_baseline_cited": {
+      "mae": 11.225999999999999,
+      "rmse": 16.09761473013937,
+      "mape": 110.32074324363556,
+      "r2": -12.082093731112654
+    },
+    "training_mean": {
+      "mae": 3.8373475000000004,
+      "rmse": 4.451567015178475,
+      "mape": 39.6409764343402,
+      "r2": -0.00041461999064407173
+    }
+  },
+  "after": {
+    "lr[app]": {
+      "mae": 3.837593374498913,
+      "rmse": 4.442575950316265,
+      "mape": 39.58812532682621,
+      "r2": 0.0036224793399844968
+    },
+    "nn[app]": {
+      "mae": 3.9721362586079954,
+      "rmse": 4.662674028191371,
+      "mape": 40.93657709480626,
+      "r2": -0.09754998340944354
+    },
+    "random_forest[app]": {
+      "mae": 3.812930498274378,
+      "rmse": 4.484743353311462,
+      "mape": 39.46158927453557,
+      "r2": -0.015381831328712403
+    },
+    "gradient_boosting[app]": {
+      "mae": 3.904546723224556,
+      "rmse": 4.584289673902686,
+      "mape": 40.24081087229317,
+      "r2": -0.06095827080466876
+    },
+    "lr[all]": {
+      "mae": 3.808583843283188,
+      "rmse": 4.425608002048519,
+      "mape": 39.31317987816855,
+      "r2": 0.011219061212927817
+    },
+    "nn[all]": {
+      "mae": 3.8308154525725993,
+      "rmse": 4.5047341270266195,
+      "mape": 39.43760719717862,
+      "r2": -0.02445414903165921
+    },
+    "random_forest[all]": {
+      "mae": 3.7601382274282233,
+      "rmse": 4.387343534476711,
+      "mape": 39.03661728440608,
+      "r2": 0.02824343926866557
+    },
+    "gradient_boosting[all]": {
+      "mae": 3.7791519410590935,
+      "rmse": 4.439650828308047,
+      "mape": 39.72038764713671,
+      "r2": 0.004934135614280466
+    }
+  },
+  "cv_5fold": {
+    "lr[app]": {
+      "mae_mean": 3.852498533821502,
+      "mae_std": 0.1670828712365722
+    },
+    "nn[app]": {
+      "mae_mean": 3.872176651572005,
+      "mae_std": 0.18478901334583667
+    },
+    "random_forest[app]": {
+      "mae_mean": 3.8747067325878923,
+      "mae_std": 0.16818495606274392
+    },
+    "gradient_boosting[app]": {
+      "mae_mean": 3.96666283704171,
+      "mae_std": 0.14502169105592438
+    },
+    "lr[all]": {
+      "mae_mean": 3.8543191350457064,
+      "mae_std": 0.19821697153898735
+    },
+    "nn[all]": {
+      "mae_mean": 3.9435171236915734,
+      "mae_std": 0.14321786749046572
+    },
+    "random_forest[all]": {
+      "mae_mean": 3.8265485398089725,
+      "mae_std": 0.2073669448438223
+    },
+    "gradient_boosting[all]": {
+      "mae_mean": 3.868315041882508,
+      "mae_std": 0.24069625258996694
+    },
+    "training_mean": {
+      "mae_mean": 3.84771675,
+      "mae_std": null
+    }
+  },
+  "shuffled_target_lr_mae": {
+    "mean": 3.890342707824015,
+    "min": 3.764554497337304
+  },
+  "yield_by_breed": {
+    "Gir": 12.64,
+    "Holstein": 12.57,
+    "Jersey": 12.06,
+    "Sahiwal": 12.42
+  },
+  "cited_baseline_by_breed": {
+    "Gir": 8.0,
+    "Holstein": 45.0,
+    "Jersey": 20.0,
+    "Sahiwal": 10.0
+  },
+  "correlations_with_yield": {
+    "Feed_Quantity(kg/day)": -0.066,
+    "Body_Temperature(\u00b0C)": -0.053,
+    "Resting_Hours(hrs/day)": 0.042,
+    "Ambient_Temperature(\u00b0C)": 0.04,
+    "Water_Intake(L/day)": -0.039,
+    "Humidity(%)": -0.039,
+    "Walking_Distance(km/day)": -0.036,
+    "Parity": -0.036,
+    "Age": 0.03,
+    "Feeding_Frequency": -0.025,
+    "Rumination_Time(hrs/day)": -0.022,
+    "Weight": 0.007,
+    "Grazing_Duration(hrs/day)": 0.006,
+    "Heart_Rate(bpm)": -0.005,
+    "breed_baseline": 0.005
+  }
+}

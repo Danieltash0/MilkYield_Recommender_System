@@ -15,7 +15,7 @@ const ManagerDashboard = () => {
 
       <div className="stat-grid">
         <StatCard label="Cattle in herd" icon="tag" value={s.total} loading={loading} />
-        <StatCard label="Milking herd" icon="drop" value={s.females} loading={loading} hint="Female cattle" />
+        <StatCard label="Milking herd" icon="drop" value={s.cows} loading={loading} hint="Cows" />
         <StatCard label="Need attention" icon="pulse" value={s.needAttention.length} loading={loading} hint="Health rated Fair or Poor" />
       </div>
 

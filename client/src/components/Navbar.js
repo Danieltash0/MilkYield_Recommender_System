@@ -28,12 +28,14 @@ const Navbar = () => {
 
   const isAdmin = user.role === ROLES.ADMIN;
   const canSeeFinance = isAdmin || user.role === ROLES.MANAGER;
+  const canLogFeed = user.role !== ROLES.VET;
   const home = dashboardPathFor(user.role);
 
   const items = [
     { to: home, label: 'Dashboard', icon: 'grid' },
     { to: '/cattle', label: 'Cattle', icon: 'tag' },
     { to: '/milking', label: 'Milking', icon: 'drop' },
+    canLogFeed && { to: '/feed/log', label: 'Feed', icon: 'trend' },
     { to: '/tasks', label: 'Tasks', icon: 'checklist' },
     { to: '/health', label: 'Health', icon: 'pulse' },
     { to: '/scan', label: 'Scan QR', icon: 'qr' },

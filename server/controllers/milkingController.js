@@ -1,6 +1,7 @@
 const MilkingRecord = require('../models/MilkingRecord');
 const Cattle = require('../models/Cattle');
 const logActivity = require('../utils/logActivity');
+const yieldService = require('../services/yieldService');
 
 const SESSIONS = ['Morning', 'Afternoon', 'Evening'];
 const MAX_LITRES_PER_SESSION = 60;
@@ -32,7 +33,7 @@ const validate = async (b) => {
   }
   const cow = await Cattle.getCattleById(b.cattle_id);
   if (!cow) return 'Cattle not found';
-  if (cow.gender !== 'Female') return 'Milk can only be recorded for female cattle';
+  if (cow.category !== 'Cow') return 'Milk can only be recorded for cows';
   return null;
 };
 
@@ -46,6 +47,16 @@ const clean = (b) => ({
     : round2(Number(b.fat_percentage)),
   notes: b.notes
 });
+
+// Best effort: the recommender must never stop a record from being saved
+const recommendationFor = async (record) => {
+  try {
+    return await yieldService.evaluateRecord(record);
+  } catch (err) {
+    console.error('Recommender failed:', err.message);
+    return null;
+  }
+};
 
 const isDuplicate = (err) => err && err.code === 'ER_DUP_ENTRY';
 const DUPLICATE_MSG = 'A record for this cow, date and session already exists';
@@ -130,7 +141,8 @@ exports.createRecord = async (req, res) => {
       'milking_recorded',
       `Recorded ${record.quantity} L for cattle #${record.cattle_id} (${record.session}, ${record.milking_date})`
     );
-    res.status(201).json({ record_id: id });
+    const recommendation = await recommendationFor({ ...record, record_id: id });
+    res.status(201).json({ record_id: id, recommendation });
   } catch (err) {
     if (isDuplicate(err)) return res.status(409).json({ error: DUPLICATE_MSG });
     console.error(err);
@@ -142,10 +154,12 @@ exports.updateRecord = async (req, res) => {
   try {
     const problem = await validate(req.body);
     if (problem) return res.status(400).json({ error: problem });
-    const changed = await MilkingRecord.updateRecord(req.params.id, clean(req.body));
+    const record = clean(req.body);
+    const changed = await MilkingRecord.updateRecord(req.params.id, record);
     if (!changed) return res.status(404).json({ error: 'Milking record not found' });
     await logActivity(req, 'milking_updated', `Updated milking record #${req.params.id}`);
-    res.json({ message: 'Milking record updated successfully' });
+    const recommendation = await recommendationFor({ ...record, record_id: Number(req.params.id) });
+    res.json({ message: 'Milking record updated successfully', recommendation });
   } catch (err) {
     if (isDuplicate(err)) return res.status(409).json({ error: DUPLICATE_MSG });
     console.error(err);

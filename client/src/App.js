@@ -24,6 +24,7 @@ import MilkingRecords from './pages/milking/MilkingRecords';
 import LogMilking from './pages/milking/LogMilking';
 import EditMilking from './pages/milking/EditMilking';
 import CattleMilkHistory from './pages/milking/CattleMilkHistory';
+import LogFeed from './pages/feed/LogFeed';
 import HealthRecords from './pages/health/HealthRecords';
 import AddHealthRecord from './pages/health/AddHealthRecord';
 import EditHealthRecord from './pages/health/EditHealthRecord';
@@ -95,6 +96,9 @@ function App() {
             <Route path="/milking" element={<ProtectedRoute allowedRoles={ALL}><MilkingRecords /></ProtectedRoute>} />
             <Route path="/milking/log" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER, WORKER]}><LogMilking /></ProtectedRoute>} />
             <Route path="/milking/:id/edit" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER]}><EditMilking /></ProtectedRoute>} />
+
+            {/* Feed */}
+            <Route path="/feed/log" element={<ProtectedRoute allowedRoles={[ADMIN, MANAGER, WORKER]}><LogFeed /></ProtectedRoute>} />
 
             {/* Tasks */}
             <Route path="/tasks" element={<ProtectedRoute allowedRoles={ALL}><TaskList /></ProtectedRoute>} />

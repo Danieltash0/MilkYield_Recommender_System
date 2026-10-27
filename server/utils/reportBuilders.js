@@ -7,11 +7,11 @@ const FinancialRecord = require('../models/FinancialRecord');
 
 const herd = async ({ from, to }) => {
   const [cattle] = await db.execute(
-    `SELECT tag_number, name, breed, gender, health, date_of_birth, created_at
+    `SELECT tag_number, name, breed, gender, category, health, date_of_birth, created_at
      FROM cattle ORDER BY tag_number`
   );
   const [registered] = await db.execute(
-    `SELECT tag_number, name, breed, gender, DATE(created_at) AS registered
+    `SELECT tag_number, name, breed, category, DATE(created_at) AS registered
      FROM cattle WHERE DATE(created_at) BETWEEN ? AND ? ORDER BY created_at`,
     [from, to]
   );
@@ -32,13 +32,13 @@ const herd = async ({ from, to }) => {
       { title: 'Breeds', columns: ['Breed', 'Animals'], rows: count('breed') },
       {
         title: 'Registered in period',
-        columns: ['Tag', 'Name', 'Breed', 'Gender', 'Registered'],
-        rows: registered.map((c) => [c.tag_number, c.name || '—', c.breed || '—', c.gender, c.registered])
+        columns: ['Tag', 'Name', 'Breed', 'Category', 'Registered'],
+        rows: registered.map((c) => [c.tag_number, c.name || '—', c.breed || '—', c.category || '—', c.registered])
       },
       {
         title: 'Full herd register',
-        columns: ['Tag', 'Name', 'Breed', 'Gender', 'Health', 'Born'],
-        rows: cattle.map((c) => [c.tag_number, c.name || '—', c.breed || '—', c.gender, c.health, c.date_of_birth || '—'])
+        columns: ['Tag', 'Name', 'Breed', 'Category', 'Health', 'Born'],
+        rows: cattle.map((c) => [c.tag_number, c.name || '—', c.breed || '—', c.category || '—', c.health, c.date_of_birth || '—'])
       }
     ]
   };

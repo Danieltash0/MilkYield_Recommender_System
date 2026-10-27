@@ -27,3 +27,6 @@ recommender/.env
 # Editor
 .vscode/
 .idea/
+
+# Recommender training exports (farm data)
+recommender/data/*.csv

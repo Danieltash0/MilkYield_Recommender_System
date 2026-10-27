@@ -19,12 +19,12 @@ INSERT IGNORE INTO users (name, email, password_hash, role) VALUES
 ('Peter Mutua', 'worker3@dairydan.com', '$2a$10$5I3tSF//Zz0fY2Hm80SHvuNorfHKaWXkFwPkJ0/1yGny2PnX8EZH6', 'worker');
 
 -- Sample herd
-INSERT IGNORE INTO cattle (tag_number, name, breed, health, gender, date_of_birth, notes, added_by) VALUES
-('CT001', 'Bessie', 'Holstein-Friesian', 'Good',      'Female', '2020-03-15', 'Friendly, good milk producer',  (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
-('CT002', 'Daisy',  'Jersey',            'Excellent', 'Female', '2019-07-22', 'High butterfat content',        (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
-('CT003', 'Molly',  'Ayrshire',          'Fair',      'Female', '2021-01-10', 'Young heifer, growing well',    (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
-('CT004', 'Rosie',  'Guernsey',          'Good',      'Female', '2018-11-02', 'Calm temperament',              (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
-('CT005', 'Duke',   'Friesian',          'Good',      'Male',   '2020-05-30', 'Breeding bull',                 (SELECT user_id FROM users WHERE email = 'admin@dairydan.com'));
+INSERT IGNORE INTO cattle (tag_number, name, breed, health, gender, category, date_of_birth, notes, added_by) VALUES
+('CT001', 'Bessie', 'Holstein-Friesian', 'Good',      'Female', 'Cow',    '2020-03-15', 'Friendly, good milk producer',  (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
+('CT002', 'Daisy',  'Jersey',            'Excellent', 'Female', 'Cow',    '2019-07-22', 'High butterfat content',        (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
+('CT003', 'Molly',  'Ayrshire',          'Fair',      'Female', 'Heifer', '2021-01-10', 'Young heifer, growing well',    (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
+('CT004', 'Rosie',  'Guernsey',          'Good',      'Female', 'Cow',    '2018-11-02', 'Calm temperament',              (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')),
+('CT005', 'Duke',   'Friesian',          'Good',      'Male',   'Bull',   '2020-05-30', 'Breeding bull',                 (SELECT user_id FROM users WHERE email = 'admin@dairydan.com'));
 
 -- Sample tasks (assigned by the admin; reassign once workers have signed up).
 -- Guarded by title so re-running the seed does not duplicate them.
@@ -117,3 +117,57 @@ FROM (
   UNION ALL SELECT 'Expense', 'Utilities', 2750.00, CURDATE() - INTERVAL 20 DAY, 'Water and electricity (seed)'
 ) AS s
 WHERE NOT EXISTS (SELECT 1 FROM financial_records f WHERE f.description = s.description);
+
+
+-- Recommender: breed baselines (litres per day), cited figures scaled to
+-- Kenyan smallholder levels. INSERT IGNORE keeps any edited row.
+INSERT IGNORE INTO breed_yield_baselines (breed, avg_daily_yield, source) VALUES
+('Holstein-Friesian', 15.75, 'FarmKenya/Standard Media 2020: 45 L/day well-managed x 0.35 for Kenyan smallholder farms'),
+('Friesian',          15.75, 'FarmKenya/Standard Media 2020: 45 L/day well-managed x 0.35 for Kenyan smallholder farms'),
+('Ayrshire',          10.50, 'FarmKenya/Standard Media 2020: 30 L/day well-managed x 0.35 for Kenyan smallholder farms'),
+('Guernsey',           8.75, 'FarmKenya/Standard Media 2020: 25 L/day well-managed x 0.35 for Kenyan smallholder farms'),
+('Jersey',             7.00, 'FarmKenya/Standard Media 2020: 20 L/day well-managed x 0.35 for Kenyan smallholder farms'),
+('Sahiwal',            5.50, 'FarmKenya 2020: 10 L/day x 0.55; ILRI AGTR commercial herds average ~5.4 L/day'),
+('Boran',              4.50, 'ILRI AGTR (Muguga and Ngong herd records)'),
+('Zebu',               1.60, 'Cambridge Animal Genetic Resources, SEAZ on-farm characterization, SE Kenya (2011)'),
+('Crossbreed',         8.00, 'USDA FAS GAIN Kenya Dairy 2024 (7.6 L/day); Ajak et al. 2020, Nyeri (10.7 L/day)'),
+('Other',              8.00, 'USDA FAS GAIN Kenya Dairy 2024 (7.6 L/day); Ajak et al. 2020, Nyeri (10.7 L/day)');
+
+-- Lactation details for the sample cows, relative to today. COALESCE only
+-- fills values that are still empty, so re-running never overwrites edits.
+UPDATE cattle SET
+    last_calving_date = COALESCE(last_calving_date, CURDATE() - INTERVAL 120 DAY),
+    parity = COALESCE(parity, 3),
+    prev_lactation_yield_l = COALESCE(prev_lactation_yield_l, 6200)
+WHERE tag_number = 'CT001';
+
+UPDATE cattle SET
+    last_calving_date = COALESCE(last_calving_date, CURDATE() - INTERVAL 150 DAY),
+    parity = COALESCE(parity, 4),
+    prev_lactation_yield_l = COALESCE(prev_lactation_yield_l, 4300)
+WHERE tag_number = 'CT002';
+
+UPDATE cattle SET
+    last_calving_date = COALESCE(last_calving_date, CURDATE() - INTERVAL 60 DAY),
+    parity = COALESCE(parity, 1)
+WHERE tag_number = 'CT003';
+
+UPDATE cattle SET
+    last_calving_date = COALESCE(last_calving_date, CURDATE() - INTERVAL 200 DAY),
+    parity = COALESCE(parity, 5),
+    prev_lactation_yield_l = COALESCE(prev_lactation_yield_l, 4800),
+    conception_date = COALESCE(conception_date, CURDATE() - INTERVAL 70 DAY)
+WHERE tag_number = 'CT004';
+
+-- 7 days of concentrate feed for the sample cows. The (cattle, day) unique
+-- key makes INSERT IGNORE skip days already recorded.
+INSERT IGNORE INTO feed_records (cattle_id, fed_on, concentrate_kg, recorded_by)
+SELECT c.cattle_id, CURDATE() - INTERVAL d.n DAY, f.kg,
+       (SELECT user_id FROM users WHERE email = 'admin@dairydan.com')
+FROM cattle c
+JOIN (SELECT 'CT001' AS tag, 6.0 AS kg UNION ALL
+      SELECT 'CT002', 4.5 UNION ALL
+      SELECT 'CT003', 3.5 UNION ALL
+      SELECT 'CT004', 5.0) f ON f.tag = c.tag_number
+CROSS JOIN (SELECT 0 AS n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+            UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6) d;

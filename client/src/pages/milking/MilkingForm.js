@@ -4,6 +4,8 @@ import { useCattle } from '../../api/useCattle';
 
 export const SESSION_OPTIONS = ['Morning', 'Afternoon', 'Evening'];
 
+const INSIGHT_LABELS = { normal: 'Normal yield', low: 'Low yield', high: 'High yield', suppressed: 'No alert' };
+
 // Local date as YYYY-MM-DD (toISOString would give the UTC date)
 export const localDate = (d = new Date()) => {
   const pad = (n) => String(n).padStart(2, '0');
@@ -25,8 +27,9 @@ const MilkingForm = ({ initial, onSubmit, submitLabel, keepOpen = false }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState('');
+  const [insight, setInsight] = useState(null); // recommender's verdict on the last save
   const { cattle } = useCattle();
-  const cows = cattle.filter((c) => c.gender === 'Female');
+  const cows = cattle.filter((c) => c.category === 'Cow');
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -35,6 +38,7 @@ const MilkingForm = ({ initial, onSubmit, submitLabel, keepOpen = false }) => {
     setSaving(true);
     setError('');
     setSaved('');
+    setInsight(null);
     const result = await onSubmit({
       ...form,
       cattle_id: Number(form.cattle_id),
@@ -48,6 +52,7 @@ const MilkingForm = ({ initial, onSubmit, submitLabel, keepOpen = false }) => {
       // Stay on the form so a worker can log the next cow straight away
       const cow = cows.find((c) => String(c.cattle_id) === String(form.cattle_id));
       setSaved(`Saved ${form.quantity} L for ${cow ? cow.name || cow.tag_number : 'cow'}.`);
+      setInsight((result.data && result.data.recommendation) || null);
       setForm({ ...form, cattle_id: '', quantity: '', fat_percentage: '', notes: '' });
     }
   };
@@ -56,6 +61,13 @@ const MilkingForm = ({ initial, onSubmit, submitLabel, keepOpen = false }) => {
     <form className="card form-card" onSubmit={handleSubmit}>
       {error && <div className="alert alert-error" role="alert">{error}</div>}
       {saved && <div className="alert alert-success" role="status">{saved}</div>}
+      {insight && (
+        <div className={`alert ${insight.status === 'low' || insight.status === 'high' ? 'alert-error' : 'alert-success'}`} role="status">
+          <span>
+            <strong>{INSIGHT_LABELS[insight.status] || 'Yield check'}:</strong> {insight.message}
+          </span>
+        </div>
+      )}
 
       <div className="form-group">
         <label htmlFor="cattle_id">Cow</label>

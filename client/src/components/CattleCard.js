@@ -17,7 +17,8 @@ const CattleCard = ({ cow, canManage, onEdit, onDelete }) => {
       </div>
       <dl className="cattle-meta">
         <div><dt>Breed</dt><dd>{cow.breed || '—'}</dd></div>
-        <div><dt>Gender</dt><dd>{cow.gender}</dd></div>
+        <div><dt>Category</dt><dd>{cow.category || '—'}</dd></div>
+        <div><dt>D.O.B</dt><dd>{cow.date_of_birth ? new Date(cow.date_of_birth + 'T00:00:00').toLocaleDateString() : '—'}</dd></div>
       </dl>
       <div className="card-actions">
         <Link to={`/cattle/${id}`} className="btn btn-outline btn-sm">View</Link>

@@ -23,6 +23,8 @@ app.use('/api/qr', require('./routes/qrRoutes'));
 app.use('/api/finance', require('./routes/financeRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/feed', require('./routes/feedRoutes'));
+app.use('/api/recommendations', require('./routes/recommendationRoutes'));
 
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 

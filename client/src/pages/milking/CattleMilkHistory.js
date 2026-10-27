@@ -46,7 +46,7 @@ const CattleMilkHistory = () => {
         </div>
         <div className="card-actions">
           <Link to={`/cattle/${cow.cattle_id}`} className="btn btn-secondary">Profile</Link>
-          {hasRole(ROLES.ADMIN, ROLES.MANAGER, ROLES.WORKER) && cow.gender === 'Female' && (
+          {hasRole(ROLES.ADMIN, ROLES.MANAGER, ROLES.WORKER) && cow.category === 'Cow' && (
             <Link to={`/milking/log?cattle=${cow.cattle_id}`} className="btn btn-primary">Log milking</Link>
           )}
         </div>

@@ -1,0 +1,86 @@
+{
+  "features": [
+    "lag1",
+    "lag2",
+    "lag3",
+    "lag4",
+    "lag5",
+    "lag6",
+    "lag7",
+    "mean7",
+    "days_in_milk",
+    "parity",
+    "breed_baseline",
+    "age_months"
+  ],
+  "defaults": {
+    "age_months": 55.0
+  },
+  "data_source": "synthetic",
+  "window": 7,
+  "milkings_per_day": 2,
+  "groups": [
+    "age"
+  ],
+  "rows": {
+    "train": 19860,
+    "test": 8520,
+    "cows": 60
+  },
+  "metrics": {
+    "ma": {
+      "mae": 0.4580142521797451,
+      "rmse": 0.585644988007699,
+      "mape": 12.280514886614553
+    },
+    "lr": {
+      "mae": 0.2466358462061401,
+      "rmse": 0.3496845077236603,
+      "mape": 6.703996736638827
+    },
+    "nn": {
+      "mae": 0.24045932140232812,
+      "rmse": 0.3365301598484966,
+      "mape": 6.6295015425436326
+    }
+  },
+  "ablation": {
+    "base": {
+      "lr_mae": 0.24662380315874105,
+      "nn_mae": 0.24288586864351105,
+      "features": 11
+    },
+    "base+age": {
+      "lr_mae": 0.2466358462061401,
+      "nn_mae": 0.24045932140232812,
+      "features": 12
+    },
+    "base+pregnancy": {
+      "lr_mae": 0.24660355614762353,
+      "nn_mae": 0.2763137892417505,
+      "features": 12
+    },
+    "base+feed": {
+      "lr_mae": 0.24784386298501154,
+      "nn_mae": 0.25349786898255905,
+      "features": 12
+    },
+    "base+prev_lactation": {
+      "lr_mae": 0.24602975645829253,
+      "nn_mae": 0.2526951912507205,
+      "features": 12
+    },
+    "base+health": {
+      "lr_mae": 0.24642024055794928,
+      "nn_mae": 0.24887746606186525,
+      "features": 13
+    },
+    "all": {
+      "lr_mae": 0.24832333830075926,
+      "nn_mae": 0.2546236755909494,
+      "features": 17
+    }
+  },
+  "best": "nn",
+  "trained_on": "2026-10-27"
+}

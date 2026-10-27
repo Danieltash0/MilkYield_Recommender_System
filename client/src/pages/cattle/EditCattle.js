@@ -23,7 +23,12 @@ const EditCattle = () => {
         breed: c.breed || '',
         health: c.health || 'Good',
         gender: c.gender || 'Female',
+        category: c.category || (c.gender === 'Male' ? 'Bull' : 'Cow'),
         date_of_birth: c.date_of_birth ? String(c.date_of_birth).slice(0, 10) : '',
+        last_calving_date: c.last_calving_date ? String(c.last_calving_date).slice(0, 10) : '',
+        parity: c.parity ?? '',
+        conception_date: c.conception_date ? String(c.conception_date).slice(0, 10) : '',
+        prev_lactation_yield_l: c.prev_lactation_yield_l ?? '',
         notes: c.notes || ''
       });
     });

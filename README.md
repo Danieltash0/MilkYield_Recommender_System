@@ -35,6 +35,41 @@ average forecaster with an FAO breed-baseline cold-start fallback).
    npm run dev
    ```
 
+## Recommender
+
+Every milking record saved through the API is judged against what the cow
+was expected to give: a 7-session moving average by default, or an ONNX model
+when you opt in. A cow with fewer than 3 records gets a knowledge-graph
+estimate instead: her breed's baseline times the factors she meets (lactation
+stage, parity, pregnancy, concentrate fed, recent illness, age), each from the
+`yield_factors` table with its source, and the alert names the factors used.
+Readings below 80% or above 120% of expected are flagged, unless recent
+illness, treatment or calving explains them.
+
+1. Apply the database changes (feed records, breed baselines, lactation
+   details, yield factors):
+   ```
+   npm run db:migrate
+   ```
+   The breed baselines are cited figures scaled to Kenyan smallholder levels,
+   and the yield factors mirror the synthetic training herd. Edit either table
+   to suit your farm; the migrations never overwrite edited rows.
+2. Export training data once the farm has some history:
+   ```
+   cd server && npm run export:training
+   ```
+   This writes `recommender/data/milk_records.csv` (git-ignored).
+3. Train in Colab: open `recommender/notebooks/DairyDan_yield_models.ipynb`,
+   upload the CSV, set `DATA_CSV` and run all cells. It compares the moving
+   average, linear regression and a neural network, and exports ONNX files.
+4. Copy `yield_nn.onnx`, `yield_lr.onnx`, `model_meta.json` and
+   `sample_input.json` into `server/ml/models/` (replacing the synthetic
+   placeholders there).
+5. Set `PREDICTOR` in `server/.env`: `ma` (default), `lr`, `nn` or
+   `auto` (the model the notebook scored best).
+
+Check it with `cd server && npm test && npm run smoke`.
+
 ## Repo layout
 
 ```

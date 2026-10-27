@@ -20,6 +20,7 @@ export const herdStats = (cattle) => {
     total: cattle.length,
     females: cattle.filter((c) => c.gender === 'Female').length,
     males: cattle.filter((c) => c.gender === 'Male').length,
+    cows: cattle.filter((c) => c.category === 'Cow').length,
     byHealth,
     needAttention: cattle
       .filter((c) => c.health in severity)

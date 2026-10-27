@@ -22,7 +22,7 @@ const MilkingRecords = () => {
   const { records, loading, error, deleteRecord } = useMilking(filters);
   const { data: summary, loading: summaryLoading, reload: reloadSummary } = useMilkingSummary(7);
   const { cattle } = useCattle();
-  const cows = cattle.filter((c) => c.gender === 'Female');
+  const cows = cattle.filter((c) => c.category === 'Cow');
 
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
