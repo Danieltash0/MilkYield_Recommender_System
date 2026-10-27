@@ -200,6 +200,7 @@ npm run db:up          # start MySQL in Docker (localhost:3307)
 npm run install-all    # installs onnxruntime-node for the server too
 npm run db:migrate     # breed baselines, yield factors and the other tables
 npm run db:seed        # optional: demo cows, users and milking history
+cd server && npm run backfill:predictions && cd ..   # judge existing records so the charts have history
 ```
 
 ### Choose the predictor
@@ -240,6 +241,10 @@ The server log should show `Recommender: the ONNX models were trained on SYNTHET
    - The profile-based (knowledge graph) estimate with its factors.
    - Recent judgements.
 4. **The knowledge graph:** add a new cow with category **Cow**, a calving date and parity, then log her first milking. The note says *"…based on the breed average adjusted for …"*.
+5. **Charts:**
+   - **Milking → Yield trends** shows the herd's daily milk against the expected amount, the 80–120% normal band, and red or orange dots on days with low or high readings. You can filter by period, breed and cow, and a table below lists the alerts.
+   - **Cow profile → Yield insight** shows the same chart for that cow.
+   - **Manager dashboard → Herd yield** summarises the last 14 days.
 
 From the API directly: `POST /api/milking` returns a `recommendation` with `method: "neural_net"`, and `GET /api/recommendations/cattle/:id` returns the forecast and the `knowledge_graph` estimate.
 

@@ -1,5 +1,6 @@
-import React from 'react';
-import { useYieldInsight } from '../api/useRecommendations';
+import React, { useState } from 'react';
+import { useYieldInsight, useYieldTrend } from '../api/useRecommendations';
+import YieldTrendChart from './YieldTrendChart';
 import '../styles/tables.css';
 
 const METHODS = {
@@ -14,6 +15,25 @@ const STATUS = { normal: 'Normal', low: 'Low', high: 'High', suppressed: 'No ale
 const statusClass = { normal: 'health health-good', low: 'health health-poor', high: 'health health-fair', suppressed: 'health health-fair' };
 
 const known = (v, unit = '') => (v === null || v === undefined ? '—' : `${v}${unit}`);
+
+export const TREND_PERIODS = [14, 30, 60, 90];
+
+// Daily expected vs actual for one cow, with a period picker
+const CowTrend = ({ cattleId }) => {
+  const [days, setDays] = useState(30);
+  const trend = useYieldTrend({ days, cattleId });
+  return (
+    <div className="yield-trend">
+      <div className="chart-header">
+        <h3>Daily yield: actual vs expected</h3>
+        <select value={days} onChange={(e) => setDays(Number(e.target.value))} aria-label="Chart period">
+          {TREND_PERIODS.map((d) => <option key={d} value={d}>Last {d} days</option>)}
+        </select>
+      </div>
+      <YieldTrendChart {...trend} perCow empty="No judged milkings for this cow in this period yet." />
+    </div>
+  );
+};
 
 // "Yield insight" card on a cow's profile: next-session forecast and recent judgements
 const YieldInsight = ({ cattleId }) => {
@@ -49,6 +69,8 @@ const YieldInsight = ({ cattleId }) => {
         <div><dt>Breed baseline</dt><dd>{f.baseline_per_session === null ? '—' : `${f.baseline_per_session} L per session (${f.baseline_breed})`}</dd></div>
         <div><dt>Health</dt><dd>{health}</dd></div>
       </dl>
+
+      <CowTrend cattleId={cattleId} />
 
       {kg && (
         <div className="table-card">

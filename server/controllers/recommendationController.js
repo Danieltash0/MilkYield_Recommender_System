@@ -29,3 +29,21 @@ exports.getAlerts = async (req, res) => {
     res.status(500).json({ error: 'Could not load yield alerts' });
   }
 };
+
+// Expected vs actual litres per day, for the herd or filtered to one cow or breed
+exports.getTrend = async (req, res) => {
+  try {
+    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
+    let cattleId = null;
+    if (req.query.cattle_id) {
+      cattleId = parseInt(req.query.cattle_id, 10);
+      if (!Number.isInteger(cattleId) || cattleId < 1) return res.status(400).json({ error: 'cattle_id must be a positive whole number' });
+    }
+    const breed = req.query.breed ? String(req.query.breed).slice(0, 100) : null;
+    const series = await YieldPrediction.dailyTrend({ days, cattleId, breed });
+    res.json({ days, cattle_id: cattleId, breed, series });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not load the yield trend' });
+  }
+};

@@ -70,6 +70,15 @@ illness, treatment or calving explains them.
 
 Check it with `cd server && npm test && npm run smoke`.
 
+Charts: **Milking → Yield trends** shows the herd's daily milk against what was
+expected (filter by breed or cow), each cow's profile has the same chart, and
+the manager dashboard has a two-week summary. Milkings are judged when they are
+saved, so records loaded by `seed.sql` or saved before the recommender existed
+need judging once:
+```
+cd server && npm run backfill:predictions
+```
+
 ## Repo layout
 
 ```

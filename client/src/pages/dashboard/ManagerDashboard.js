@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCattle } from '../../api/useCattle';
-import { herdStats, DashboardHeader, StatCard, HealthBreakdown, CattleListCard, QuickActions } from './widgets';
+import { herdStats, DashboardHeader, StatCard, HealthBreakdown, CattleListCard, QuickActions, HerdYieldCard } from './widgets';
 
-// Herd operations view. Task assignment and milk yield widgets land with their own branches.
+// Herd operations view. Task assignment widgets land with their own branch.
 const ManagerDashboard = () => {
   const { cattle, loading, error } = useCattle();
   const s = herdStats(cattle);
@@ -20,6 +20,7 @@ const ManagerDashboard = () => {
       </div>
 
       <div className="dash-grid">
+        <HerdYieldCard />
         <HealthBreakdown byHealth={s.byHealth} total={s.total} />
         <CattleListCard
           title="Needs attention"
@@ -32,6 +33,7 @@ const ManagerDashboard = () => {
       <QuickActions>
         <Link to="/cattle" className="btn btn-primary">View cattle</Link>
         <Link to="/cattle/add" className="btn btn-outline">Add cattle</Link>
+        <Link to="/milking/trends" className="btn btn-outline">Yield trends</Link>
       </QuickActions>
     </div>
   );

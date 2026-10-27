@@ -58,7 +58,10 @@ const MilkingRecords = () => {
           <h1>Milking</h1>
           <p className="muted">Yields recorded per cow, per session.</p>
         </div>
-        {canLog && <Link to="/milking/log" className="btn btn-primary">Log milking</Link>}
+        <div className="card-actions">
+          <Link to="/milking/trends" className="btn btn-outline">Yield trends</Link>
+          {canLog && <Link to="/milking/log" className="btn btn-primary">Log milking</Link>}
+        </div>
       </div>
 
       <div className="stat-grid">

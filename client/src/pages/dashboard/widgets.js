@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { healthClass } from '../../components/CattleCard';
 import Icon from '../../components/Icon';
+import YieldTrendChart from '../../components/YieldTrendChart';
+import { useYieldTrend } from '../../api/useRecommendations';
 
 export const HEALTH_LEVELS = ['Excellent', 'Good', 'Fair', 'Poor'];
 
@@ -107,3 +109,27 @@ export const QuickActions = ({ children }) => (
     <div className="card-actions">{children}</div>
   </div>
 );
+
+// Herd milk against the recommender's expectation over the last two weeks
+export const HerdYieldCard = ({ days = 14 }) => {
+  const trend = useYieldTrend({ days });
+  const flagged = trend.series.reduce((s, d) => s + d.low + d.high, 0);
+  const actual = trend.series.reduce((s, d) => s + (d.actual || 0), 0);
+  const expected = trend.series.reduce((s, d) => s + d.expected, 0);
+  const pct = expected ? Math.round((actual / expected) * 100) : null;
+
+  return (
+    <div className="card">
+      <div className="chart-header">
+        <h3>Herd yield · {days} days</h3>
+        <Link to="/milking/trends">View trends</Link>
+      </div>
+      <YieldTrendChart {...trend} height={200} compact empty="No judged milkings in the last two weeks." />
+      {!trend.loading && !trend.error && trend.series.length > 0 && (
+        <p className="muted chart-note">
+          {pct}% of expected · {flagged} low or high reading{flagged === 1 ? '' : 's'}
+        </p>
+      )}
+    </div>
+  );
+};

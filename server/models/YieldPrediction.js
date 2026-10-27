@@ -63,3 +63,46 @@ exports.recentAlerts = async (days = 7) => {
   );
   return rows.map(toNumbers);
 };
+
+// Expected vs actual litres per day over the last `days` days (today included),
+// for the whole herd or one cow / breed. Only judged sessions count, so both
+// totals cover the same milkings.
+exports.dailyTrend = async ({ days = 30, cattleId = null, breed = null } = {}) => {
+  const where = ['p.milking_date >= CURDATE() - INTERVAL ? DAY'];
+  const params = [days - 1];
+  if (cattleId) {
+    where.push('p.cattle_id = ?');
+    params.push(cattleId);
+  }
+  if (breed) {
+    where.push('c.breed = ?');
+    params.push(breed);
+  }
+  const [rows] = await db.execute(
+    `SELECT p.milking_date AS date,
+            SUM(p.expected_litres) AS expected,
+            SUM(p.actual_litres) AS actual,
+            COUNT(DISTINCT p.cattle_id) AS cows,
+            COUNT(*) AS sessions,
+            SUM(p.status = 'low') AS low,
+            SUM(p.status = 'high') AS high,
+            SUM(p.status = 'suppressed') AS suppressed
+     FROM milk_yield_predictions p
+     JOIN cattle c ON c.cattle_id = p.cattle_id
+     WHERE ${where.join(' AND ')}
+     GROUP BY p.milking_date
+     ORDER BY p.milking_date`,
+    params
+  );
+  const litres = (v) => (v === null ? null : Math.round(Number(v) * 100) / 100);
+  return rows.map((r) => ({
+    date: r.date,
+    expected: litres(r.expected),
+    actual: litres(r.actual),
+    cows: Number(r.cows),
+    sessions: Number(r.sessions),
+    low: Number(r.low),
+    high: Number(r.high),
+    suppressed: Number(r.suppressed)
+  }));
+};

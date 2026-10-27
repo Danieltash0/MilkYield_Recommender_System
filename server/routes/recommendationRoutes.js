@@ -7,6 +7,7 @@ const { authenticateToken } = require('../middleware/auth');
 router.use(authenticateToken);
 
 router.get('/alerts', recommendationController.getAlerts);
+router.get('/trend', recommendationController.getTrend);
 router.get('/cattle/:id', recommendationController.getForCattle);
 
 module.exports = router;

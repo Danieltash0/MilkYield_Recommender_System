@@ -7,7 +7,8 @@
     "dev": "nodemon server.js",
     "test": "jest",
     "smoke": "node scripts/smoke-test.js",
-    "export:training": "node scripts/exportTrainingData.js"
+    "export:training": "node scripts/exportTrainingData.js",
+    "backfill:predictions": "node scripts/backfillPredictions.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
