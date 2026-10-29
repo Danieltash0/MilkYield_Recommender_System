@@ -7,6 +7,7 @@
 // Any model problem falls back to the moving average.
 const { WINDOW, MIN_RECORDS, buildFeatureRow } = require('./features');
 const defaultModel = require('./nnModel');
+const { adviceFor } = require('./advice');
 
 const LOW = 0.8;
 const HIGH = 1.2;
@@ -17,6 +18,9 @@ const SANE_MAX = 3;
 const METHOD = { nn: 'neural_net', lr: 'linear_regression' };
 
 const round = (n, dp) => Math.round(n * 10 ** dp) / 10 ** dp;
+
+// The normal range around an expected yield: readings outside it are flagged
+const rangeFor = (expected) => ({ low: round(expected * LOW, 2), high: round(expected * HIGH, 2) });
 
 const movingAverage = (history) => {
   if (history.length < MIN_RECORDS) return null;
@@ -95,14 +99,17 @@ const recommend = async ({ history = [], context = {}, baseline = null, knowledg
   else throw new Error('No milking history or breed baseline to compare against');
 
   const expected = round(pick.expected, 2);
+  const verdict = judge(expected, actual, context.flags);
   return {
     expected,
+    range: rangeFor(expected),
     method: pick.method,
     historyUsed: pick.historyUsed,
     modelSource: pick.modelSource,
     adjustments: pick.adjustments || null,
-    ...judge(expected, actual, context.flags)
+    ...verdict,
+    advice: adviceFor({ status: verdict.status, context })
   };
 };
 
-module.exports = { recommend, movingAverage, suppressionReason, LOW, HIGH };
+module.exports = { recommend, movingAverage, suppressionReason, rangeFor, LOW, HIGH };

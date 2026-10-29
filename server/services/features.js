@@ -12,6 +12,7 @@ const MIN_RECORDS = 3; // fewest sessions the moving average will work from
 const HEALTH_WINDOW_DAYS = 7;
 const DAYS_SINCE_CAP = 30;
 const RECENT_CALVING_DAYS = 7;
+const FEED_USUAL_DAYS = 7; // days before asOf that make up a cow's usual ration
 
 const SICK_TYPES = ['Illness', 'Injury'];
 const TREATMENT_TYPES = ['Treatment'];
@@ -115,6 +116,19 @@ const feedOn = (feedByDate, date) => {
   return numberOrNull(feedByDate instanceof Map ? feedByDate.get(key) : feedByDate[key]);
 };
 
+// Concentrate fed on `asOf` against the cow's usual ration: the average of
+// the feed logged in the FEED_USUAL_DAYS days before it. Nulls when unknown.
+const feedSignals = (feedByDate, asOf) => {
+  const today = feedOn(feedByDate, asOf);
+  const day = dayNumber(asOf);
+  const entries = feedByDate instanceof Map ? [...feedByDate.entries()] : Object.entries(feedByDate || {});
+  const before = entries
+    .map(([date, kg]) => ({ ago: day - dayNumber(date), kg: numberOrNull(kg) }))
+    .filter((e) => e.kg !== null && e.ago >= 1 && e.ago <= FEED_USUAL_DAYS);
+  const usual = before.length ? Math.round((before.reduce((s, e) => s + e.kg, 0) / before.length) * 100) / 100 : null;
+  return { today, usual, daysLogged: before.length };
+};
+
 // Everything known about a cow on `asOf`. Unknown values are null.
 // Lactation details describe the cow's current lactation, so for a date before
 // its last calving they are unknown rather than borrowed from the future.
@@ -134,6 +148,7 @@ const buildContext = ({ cow, asOf, feedByDate, healthEvents }) => {
     prevLactationL: inThisLactation ? numberOrNull(cow.prev_lactation_yield_l) : null,
     healthActive: health.healthActive,
     daysSinceIllness: health.daysSinceIllness,
+    feed: feedSignals(feedByDate, asOf),
     flags: {
       sick: health.sick,
       inTreatment: health.inTreatment,
@@ -176,6 +191,7 @@ module.exports = {
   HEALTH_WINDOW_DAYS,
   DAYS_SINCE_CAP,
   RECENT_CALVING_DAYS,
+  FEED_USUAL_DAYS,
   milkingsPerDay,
   dayNumber,
   daysBetween,
@@ -186,6 +202,7 @@ module.exports = {
   pickBaseline,
   baselinePerSession,
   healthSignals,
+  feedSignals,
   buildContext,
   buildFeatureRow
 };

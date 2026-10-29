@@ -150,6 +150,21 @@ describe('forecastNext', () => {
     expect(f.knowledge_graph.path[0]).toEqual({ from: 'Bessie', relation: 'is_a', to: 'Holstein-Friesian' });
   });
 
+  test('gives a normal range and feed advice for the next session', async () => {
+    const day = (ago) => {
+      const d = new Date();
+      d.setDate(d.getDate() - ago);
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    };
+    FeedRecord.getConcentrateMap.mockResolvedValue(new Map([[day(0), 1], [day(1), 4], [day(2), 4]]));
+    const f = await yieldService.forecastNext(1);
+    expect(f.range.low).toBeCloseTo(f.expected * 0.8, 2);
+    expect(f.range.high).toBeCloseTo(f.expected * 1.2, 2);
+    expect(f.advice.map((t) => t.code)).toEqual(['feed_drop']);
+    expect(f.factors).toMatchObject({ concentrate_kg: 1, usual_concentrate_kg: 4 });
+  });
+
   test('reports why when nothing can be forecast', async () => {
     MilkingRecord.getRecords.mockResolvedValue([]);
     BreedBaseline.getAll.mockResolvedValue([]);

@@ -19,6 +19,27 @@ const tenTen = history(Array(10).fill(10));
 beforeEach(() => jest.spyOn(console, 'warn').mockImplementation(() => {}));
 afterEach(() => jest.restoreAllMocks());
 
+describe('range and advice', () => {
+  test('every result carries the normal range around expected', async () => {
+    const r = await recommend({ history: history([10, 10, 10]), context: ctx() }, { predictor: 'ma' });
+    expect(r.range).toEqual({ low: 8, high: 12 });
+  });
+
+  test('a low reading gets feed advice from the context', async () => {
+    const context = { ...ctx(), feed: { today: 1, usual: 4, daysLogged: 5 } };
+    const r = await recommend({ history: history([10, 10, 10]), context, actual: 6 }, { predictor: 'ma' });
+    expect(r.status).toBe('low');
+    expect(r.advice.map((t) => t.code)).toEqual(['feed_drop', 'check_udder']);
+  });
+
+  test('a plain forecast still gets advice to act on', async () => {
+    const context = { ...ctx({ sick: true }), feed: { today: null, usual: 4, daysLogged: 2 } };
+    const r = await recommend({ history: history([10, 10, 10]), context }, { predictor: 'ma' });
+    expect(r.status).toBeNull();
+    expect(r.advice.map((t) => t.code)).toEqual(['health_recovery', 'feed_missing']);
+  });
+});
+
 describe('tiers', () => {
   test('cold start uses the breed baseline with fewer than 3 records', async () => {
     const r = await recommend({ history: history([9, 9]), context: ctx(), baseline: 8 }, { predictor: 'ma' });

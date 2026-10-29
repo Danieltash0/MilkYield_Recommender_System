@@ -118,6 +118,7 @@ const forecastNext = async (cattleId) => {
     age_months: context.ageMonths,
     days_pregnant: context.daysPregnant,
     concentrate_kg: context.concentrateKg,
+    usual_concentrate_kg: context.feed ? context.feed.usual : null,
     prev_lactation_l: context.prevLactationL,
     health_active: context.healthActive,
     days_since_illness: context.daysSinceIllness,
@@ -144,6 +145,8 @@ const forecastNext = async (cattleId) => {
     const result = await recommend({ history, context, baseline, knowledge });
     return {
       expected: result.expected,
+      range: result.range,
+      advice: result.advice,
       method: result.method,
       history_used: result.historyUsed,
       model_source: result.modelSource,
@@ -153,7 +156,7 @@ const forecastNext = async (cattleId) => {
     };
   } catch (err) {
     return {
-      expected: null, method: null, history_used: 0, model_source: null, last_record: lastRecord, factors,
+      expected: null, range: null, advice: [], method: null, history_used: 0, model_source: null, last_record: lastRecord, factors,
       knowledge_graph: profileEstimate, note: err.message
     };
   }

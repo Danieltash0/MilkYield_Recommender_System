@@ -127,6 +127,22 @@ describe('health signals', () => {
   });
 });
 
+describe('feedSignals', () => {
+  test("today's concentrate against the average of the 7 days before", () => {
+    const feed = new Map([
+      ['2026-10-20', 1], ['2026-10-19', 4], ['2026-10-18', 5], ['2026-10-14', 3],
+      ['2026-10-12', 9], // 8 days back: outside the usual window
+      ['2026-10-21', 7] // after asOf: never used
+    ]);
+    expect(f.feedSignals(feed, '2026-10-20')).toEqual({ today: 1, usual: 4, daysLogged: 3 });
+  });
+
+  test('unknown when nothing is logged', () => {
+    expect(f.feedSignals(undefined, '2026-10-20')).toEqual({ today: null, usual: null, daysLogged: 0 });
+    expect(f.feedSignals({ '2026-10-19': '3.5' }, '2026-10-20')).toEqual({ today: null, usual: 3.5, daysLogged: 1 });
+  });
+});
+
 describe('buildContext', () => {
   const cow = {
     date_of_birth: '2020-03-15',
@@ -152,6 +168,7 @@ describe('buildContext', () => {
       prevLactationL: 6200,
       healthActive: 1,
       daysSinceIllness: 2,
+      feed: { today: 5.5, usual: null, daysLogged: 0 },
       flags: { sick: true, inTreatment: false, recentCalving: false }
     });
   });

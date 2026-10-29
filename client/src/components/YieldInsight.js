@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useYieldInsight, useYieldTrend } from '../api/useRecommendations';
 import YieldTrendChart from './YieldTrendChart';
 import '../styles/tables.css';
+import '../styles/charts.css';
 
 const METHODS = {
   neural_net: 'Neural network model',
@@ -53,7 +54,12 @@ const YieldInsight = ({ cattleId }) => {
       <dl className="details">
         <div>
           <dt>Expected next session</dt>
-          <dd>{forecast.expected === null ? 'Not enough data yet' : `${forecast.expected} L`}</dd>
+          <dd>
+            {forecast.expected === null ? 'Not enough data yet' : `${forecast.expected} L`}
+            {forecast.range && (
+              <span className="muted"> · normal range {forecast.range.low}–{forecast.range.high} L</span>
+            )}
+          </dd>
         </div>
         <div>
           <dt>Method</dt>
@@ -65,10 +71,27 @@ const YieldInsight = ({ cattleId }) => {
         <div><dt>Days in milk</dt><dd>{known(f.days_in_milk)}</dd></div>
         <div><dt>Parity</dt><dd>{known(f.parity)}</dd></div>
         <div><dt>Days pregnant</dt><dd>{f.days_pregnant ? f.days_pregnant : 'Not pregnant'}</dd></div>
-        <div><dt>Concentrate today</dt><dd>{known(f.concentrate_kg, ' kg')}</dd></div>
+        <div>
+          <dt>Concentrate today</dt>
+          <dd>
+            {known(f.concentrate_kg, ' kg')}
+            {f.usual_concentrate_kg !== null && f.usual_concentrate_kg !== undefined && (
+              <span className="muted"> · usually {f.usual_concentrate_kg} kg</span>
+            )}
+          </dd>
+        </div>
         <div><dt>Breed baseline</dt><dd>{f.baseline_per_session === null ? '—' : `${f.baseline_per_session} L per session (${f.baseline_breed})`}</dd></div>
         <div><dt>Health</dt><dd>{health}</dd></div>
       </dl>
+
+      {forecast.advice && forecast.advice.length > 0 && (
+        <div className="alert alert-warning yield-advice" role="status">
+          <strong>Before the next milking:</strong>
+          <ul>
+            {forecast.advice.map((t) => <li key={t.code}>{t.text}</li>)}
+          </ul>
+        </div>
+      )}
 
       <CowTrend cattleId={cattleId} />
 
@@ -113,7 +136,12 @@ const YieldInsight = ({ cattleId }) => {
                 <tr key={j.prediction_id}>
                   <td>{j.milking_date}</td>
                   <td>{j.session}</td>
-                  <td>{j.expected_litres} L</td>
+                  <td>
+                    {j.expected_litres} L
+                    {j.expected_range && (
+                      <div className="muted">{j.expected_range.low}–{j.expected_range.high} L</div>
+                    )}
+                  </td>
                   <td>{known(j.actual_litres, ' L')}</td>
                   <td><span className={statusClass[j.status]}>{STATUS[j.status]}</span></td>
                   <td style={{ whiteSpace: 'normal', minWidth: '16rem' }}>{j.message}</td>

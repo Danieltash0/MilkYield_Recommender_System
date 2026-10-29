@@ -27,6 +27,9 @@ const buildFacts = (result, cowName) => ({
   historyUsed: result.historyUsed,
   // Labels of the knowledge-graph factors used; they carry no numbers
   adjustments: (result.adjustments || []).map((a) => a.label),
+  range: result.range || null,
+  // Advisory tips from services/advice.js; each lists the numbers in its text
+  tips: (result.advice || []).map((t) => ({ text: t.text, numbers: t.numbers || [] })),
   percent: result.ratio === null || result.ratio === undefined ? null : Math.round(Math.abs(1 - result.ratio) * 100)
 });
 
@@ -38,27 +41,42 @@ const basisText = (f) => {
   return BASIS[f.method] || 'recent records';
 };
 
+// Used when a result carries no tips (callers that predate services/advice.js)
+const FALLBACK_TIPS = {
+  low: 'Check feed, water and udder health, and watch the next session.',
+  high: 'Check that the reading was entered correctly.'
+};
+
+const rangeText = (f) => (f.range ? ` (normal range ${fmt(f.range.low)}\u2013${fmt(f.range.high)} L)` : '');
+const tipsText = (f) => {
+  const tips = f.tips && f.tips.length ? f.tips.map((t) => t.text).join(' ') : FALLBACK_TIPS[f.status] || '';
+  return tips ? `${tips} ` : '';
+};
+
 const templateText = (f) => {
   const name = f.cowName;
   const basis = `Expected yield is based on ${basisText(f)}.`;
+  const expected = `${fmt(f.expected)} L${rangeText(f)}`;
   switch (f.status) {
     case 'low':
-      return `${name} gave ${fmt(f.actual)} L, about ${f.percent}% below the expected ${fmt(f.expected)} L. ` +
-        `Check feed, water and udder health, and watch the next session. ${basis}`;
+      return `${name} gave ${fmt(f.actual)} L, about ${f.percent}% below the expected ${expected}. ${tipsText(f)}${basis}`;
     case 'high':
-      return `${name} gave ${fmt(f.actual)} L, about ${f.percent}% above the expected ${fmt(f.expected)} L. ` +
-        `Check that the reading was entered correctly. ${basis}`;
+      return `${name} gave ${fmt(f.actual)} L, about ${f.percent}% above the expected ${expected}. ${tipsText(f)}${basis}`;
     case 'suppressed':
-      return `${name} gave ${fmt(f.actual)} L against an expected ${fmt(f.expected)} L. ` +
-        `No alert was raised because of the cow's condition (${f.reason}). ${basis}`;
+      return `${name} gave ${fmt(f.actual)} L against an expected ${expected}. ` +
+        `No alert was raised because of the cow's condition (${f.reason}). ${tipsText(f)}${basis}`;
     default:
-      return `${name} gave ${fmt(f.actual)} L, in line with the expected ${fmt(f.expected)} L. ${basis}`;
+      return `${name} gave ${fmt(f.actual)} L, in line with the expected ${expected}. ${basis}`;
   }
 };
 
 // True when every number in `text` is one the engine supplied (to 0.05)
 const numbersAreGrounded = (text, f) => {
-  const allowed = [f.expected, f.actual, f.historyUsed, f.percent]
+  const allowed = [
+    f.expected, f.actual, f.historyUsed, f.percent,
+    ...(f.range ? [f.range.low, f.range.high] : []),
+    ...(f.tips || []).flatMap((t) => t.numbers || [])
+  ]
     .filter((n) => typeof n === 'number' && Number.isFinite(n));
   // The cow's name or tag may contain digits of its own
   const body = f.cowName ? String(text).split(f.cowName).join(' ') : String(text);
@@ -85,7 +103,7 @@ const askLlm = async (f, template, fetchImpl) => {
           {
             role: 'system',
             content:
-              'You rewrite milk yield notes for dairy farm workers. Reply with at most two short, plain sentences. ' +
+              'You rewrite milk yield notes for dairy farm workers. Reply with at most three short, plain sentences, keeping every action the note recommends. ' +
               'Use only the numbers in the note. Do not add numbers, diagnoses or advice that is not in the note.'
           },
           { role: 'user', content: template }

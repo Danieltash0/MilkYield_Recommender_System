@@ -1,4 +1,5 @@
 const db = require('../utils/database');
+const { rangeFor } = require('../services/recommender');
 
 const SELECT = `
   SELECT p.prediction_id, p.cattle_id, p.record_id, p.milking_date, p.session, p.expected_litres, p.actual_litres,
@@ -13,6 +14,8 @@ const NEWEST_FIRST = `ORDER BY p.milking_date DESC, FIELD(p.session, 'Evening', 
 const toNumbers = (r) => ({
   ...r,
   expected_litres: Number(r.expected_litres),
+  // The normal range is not stored: it always follows from the expected yield
+  expected_range: rangeFor(Number(r.expected_litres)),
   actual_litres: r.actual_litres === null ? null : Number(r.actual_litres),
   ratio: r.ratio === null ? null : Number(r.ratio)
 });

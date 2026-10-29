@@ -25,6 +25,7 @@ describe('templateText', () => {
   test('low', () => {
     const text = templateText(facts());
     expect(text).toMatch(/^Bessie gave 7\.2 L, about 31% below the expected 10\.5 L\./);
+    expect(text).toMatch(/Check feed, water and udder health/); // no tips given: the fallback
     expect(text).toMatch(/average of the last 7 sessions/);
   });
 
@@ -52,6 +53,31 @@ describe('templateText', () => {
     expect(numbersAreGrounded(text, f)).toBe(true);
     expect(templateText(facts({ method: 'knowledge_graph', adjustments: [{ label: 'late pregnancy' }] })))
       .toMatch(/adjusted for late pregnancy \(/);
+  });
+
+  test('shows the normal range and the advisory tips', () => {
+    const f = facts({
+      range: { low: 8.4, high: 12.6 },
+      advice: [
+        { code: 'feed_drop', text: 'Concentrate was cut to 1.5 kg from her usual 4 kg; restore the usual ration.', numbers: [1.5, 4] },
+        { code: 'check_udder', text: 'Also check her water supply and udder for signs of mastitis.', numbers: [] }
+      ]
+    });
+    const text = templateText(f);
+    expect(text).toMatch(/below the expected 10\.5 L \(normal range 8\.4–12\.6 L\)\. Concentrate was cut to 1\.5 kg/);
+    expect(text).toMatch(/mastitis\. Expected yield is based on/);
+    expect(text).not.toMatch(/Check feed, water/);
+    expect(numbersAreGrounded(text, f)).toBe(true);
+    expect(numbersAreGrounded('Feed was cut to 1.5 kg from 4 kg; she gave 7.2 L, range 8.4 to 12.6 L.', f)).toBe(true);
+    expect(numbersAreGrounded('Feed was cut to 2 kg.', f)).toBe(false);
+  });
+
+  test('suppressed notes add the recovery tip after the reason', () => {
+    const f = facts({
+      status: 'suppressed', reason: 'illness or injury recorded recently', range: { low: 8.4, high: 12.6 },
+      advice: [{ code: 'health_recovery', text: "Follow the vet's treatment plan.", numbers: [] }]
+    });
+    expect(templateText(f)).toMatch(/\(illness or injury recorded recently\)\. Follow the vet's treatment plan\. Expected/);
   });
 
   test('every template is grounded in its own facts', () => {

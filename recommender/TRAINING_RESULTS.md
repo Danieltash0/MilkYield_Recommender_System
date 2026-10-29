@@ -1,10 +1,11 @@
 # Training results
 
-Last updated 2026-10-28. This file covers three pieces of work on the milk yield recommender:
+Last updated 2026-10-29. This file covers four pieces of work on the milk yield recommender:
 
 1. **Training on the 1000-cow dataset** (`cattle_milk_yield_1000.csv`). The models learned nothing usable, so they weren't deployed.
 2. **Retraining the app's models on a Kenyan-level synthetic herd** built from the cited breed figures. These are the models now in `server/ml/models/`.
 3. **A knowledge graph for cold start**: the estimate for cows with fewer than 3 milking records.
+4. **Yield ranges and feed-aware advisory tips**, added after checking the system against the project's conceptual framework.
 
 The end of the file explains how to run the models in the app.
 
@@ -20,6 +21,8 @@ For every milking record saved, the recommender works out what the cow was expec
 | 0–2, when no factor applies | Breed baseline |
 
 Alerts aren't raised when recent illness, treatment or calving explains the reading.
+
+Every prediction also comes with a **normal range** (80–120% of the expected yield) and, where the cow's records explain something, **advisory tips** based on her feed, lactation stage and health. See section 4.
 
 ---
 
@@ -173,23 +176,94 @@ Expected: 3.5 x 1.23 x 0.8 = 3.44 L
 
 ---
 
-## 4. Verification
+## 4. Yield range and advisory tips
+
+A check of the system against the conceptual framework diagram (`framework_diagram (2).png`) found two gaps in the **Outputs** box:
+
+- **Yield range:** the forecast was a single number, not a range.
+- **Advisory tips:** the advice was the same generic line for every cow, and it ignored the feed records.
+
+Both are now fixed. No retraining or database change was needed.
+
+### Yield range
+
+- Every judgement and forecast now carries a range of 80–120% of the expected yield, the same limits that decide low and high readings.
+- The range is calculated from the expected figure whenever it's needed (`rangeFor` in `server/services/recommender.js`), so it isn't stored.
+- **Where it shows:**
+  - Notes, e.g. *"…below the expected 3.41 L (normal range 2.73–4.09 L)."*
+  - The profile's forecast: *"Expected next session: 3.01 L · normal range 2.41–3.61 L"*.
+  - The Expected column of the profile's judgements table.
+  - The API: `range` on recommendations and forecasts, `expected_range` on stored judgements.
+
+### Advisory tips
+
+`server/services/advice.js` builds the tips from the cow's records:
+
+- **Feed:** today's concentrate against her usual ration, the average of her feed records for the previous 7 days (`feedSignals` in `server/services/features.js`).
+- **Stage:** late lactation (250+ days in milk) and close to drying off (210+ days pregnant).
+- **Health:** recent illness, treatment or calving.
+
+| Tip | When it's given |
+|---|---|
+| Feed missing | No feed record for today |
+| Ration cut | Concentrate today is below 75% of her usual |
+| Ration raised | Concentrate today is above 125% of her usual (explains a high reading) |
+| Little concentrate | Under 1 kg today |
+| Late lactation / near dry-off | Explains a natural drop |
+| Health recovery | Follow the vet's plan and milk withdrawal periods |
+| Fresh cow | Recently calved |
+| Check the entry | High reading: confirm it was entered correctly |
+| Check the udder | Low reading: check water and udder; if nothing else explains it, ask the vet to examine her if it happens again |
+
+What a reading gets:
+
+- **Low:** feed tips, then stage tips, then the udder check.
+- **High:** the entry check, plus the ration-raised tip when it applies.
+- **Held back by illness:** the health tips.
+- **Normal:** no tips.
+- **The forecast:** health, feed and stage tips, shown on the profile in a yellow **"Before the next milking"** box.
+
+Example note for a low reading after a ration cut: *"Wambui gave 2 L, about 41% below the expected 3.41 L (normal range 2.73–4.09 L). Concentrate was cut to 1 kg from her usual 4 kg; restore the usual ration. Also check her water supply and udder for signs of mastitis. Expected yield is based on…"*
+
+The profile's **Concentrate today** row now also shows *"· usually X kg"*.
+
+If the optional LLM rewording is turned on, it may use up to three sentences and must keep every action. The range limits and the numbers in the tips count as grounded, so it still can't add numbers of its own.
+
+### Framework walkthrough
+
+A script registers a test cow, logs a week of feed (4 kg a day, cut to 1 kg on the last day), milkings, an illness and a low reading through the live API. It checks each box of the diagram, then deletes everything it created.
+
+| `PREDICTOR` | Result |
+|---|---|
+| `ma` | All checks pass |
+| `auto` | All pass except two "framework literal" checks: once a cow has 7+ records, the neural net replaces the moving average the diagram shows. This is expected. |
+
+To match the diagram exactly, use `PREDICTOR=ma`, or add the neural net to the diagram as an extension of the time-series path.
+
+### Stored notes refreshed
+
+`npm run backfill:predictions` was re-run so existing notes use the new format: 112 milkings judged (neural net 84, moving average 16, knowledge graph 12; 97 normal, 13 high, 1 low, 1 held back).
+
+---
+
+## 5. Verification
 
 | Check | Result |
 |---|---|
 | ONNX files give the same answers as scikit-learn | Within 2e-6 |
-| `npm test` (server) | 134/134 passed |
+| `npm test` (server) | 159/159 passed (12 suites, including the new `advice.test.js`) |
 | `npm run smoke` (server) | Passed, including Node matching Python on the sample inputs |
 | Client `npm run build` | Compiled successfully |
 | Migrations on the dev database, run twice | Applied once; the second run did nothing |
 | Fresh `schema.sql` + `seed.sql` + all migrations (throwaway database) | Loaded cleanly |
 | Live API with `PREDICTOR=auto` | Neural net used for cows with history; knowledge graph used for a new cow |
+| Framework walkthrough, `PREDICTOR=ma` | All checks passed |
 
-**Not checked:** the new profile-page section in a browser.
+**Not checked:** the profile page (range, usual ration and the "Before the next milking" box) in a browser.
 
 ---
 
-## 5. Running the models in the app
+## 6. Running the models in the app
 
 ### First time, or after pulling these changes
 
@@ -224,7 +298,7 @@ PREDICTOR=auto
 
 ```
 cd server
-npm test               # 134 tests
+npm test               # 159 tests
 npm run smoke          # loads both ONNX models and the knowledge graph
 cd ..
 npm run dev            # server and client together
@@ -235,18 +309,20 @@ The server log should show `Recommender: the ONNX models were trained on SYNTHET
 ### See it working
 
 1. **Log a reading:** log in as a worker, manager or admin and go to **Milking → Log milking**. Pick a cow with history (Bessie, Daisy or Rosie in the demo data) and save a reading. The alert at the top shows the result, and the note says *"Expected yield is based on the neural network model."*
-2. **Low readings:** a reading well below normal, e.g. 5 L for Bessie, shows **Low yield**.
+2. **Low readings:** a reading well below normal, e.g. 5 L for Bessie, shows **Low yield**. The note gives the normal range and tips. If you first log a feed record for her with much less concentrate than usual, the note tells you the ration was cut.
 3. **The profile page:** open the cow's profile. The **Yield insight** card shows:
-   - The next-session forecast and the method used.
+   - The next-session forecast with its normal range, and the method used.
+   - Today's concentrate next to her usual ration.
+   - A **"Before the next milking"** box when there are tips.
    - The profile-based (knowledge graph) estimate with its factors.
-   - Recent judgements.
+   - Recent judgements, each with its range and note.
 4. **The knowledge graph:** add a new cow with category **Cow**, a calving date and parity, then log her first milking. The note says *"…based on the breed average adjusted for …"*.
 5. **Charts:**
    - **Milking → Yield trends** shows the herd's daily milk against the expected amount, the 80–120% normal band, and red or orange dots on days with low or high readings. You can filter by period, breed and cow, and a table below lists the alerts.
    - **Cow profile → Yield insight** shows the same chart for that cow.
    - **Manager dashboard → Herd yield** summarises the last 14 days.
 
-From the API directly: `POST /api/milking` returns a `recommendation` with `method: "neural_net"`, and `GET /api/recommendations/cattle/:id` returns the forecast and the `knowledge_graph` estimate.
+From the API directly: `POST /api/milking` returns a `recommendation` with `method: "neural_net"`, and `GET /api/recommendations/cattle/:id` returns the forecast (with `range` and `advice`) and the `knowledge_graph` estimate.
 
 ### Switching the models off
 
