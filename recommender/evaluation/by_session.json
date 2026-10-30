@@ -1,0 +1,20 @@
+{
+ "morning": {
+  "sessions": 4260,
+  "sick": 152,
+  "tp": 14,
+  "fp": 0,
+  "fn": 138,
+  "median_ratio_healthy": 1.108,
+  "median_ratio_sick": 0.977
+ },
+ "evening": {
+  "sessions": 4260,
+  "sick": 152,
+  "tp": 74,
+  "fp": 370,
+  "fn": 78,
+  "median_ratio_healthy": 0.882,
+  "median_ratio_sick": 0.804
+ }
+}

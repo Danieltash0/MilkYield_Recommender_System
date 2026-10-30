@@ -60,3 +60,66 @@ describe('getTrend', () => {
     console.error.mockRestore();
   });
 });
+
+describe('getProjection', () => {
+  const Cattle = require('../models/Cattle');
+  const yieldService = require('../services/yieldService');
+  const PROJECTION = { available: true, series: [] };
+
+  beforeEach(() => {
+    Cattle.getCattleById.mockResolvedValue({ cattle_id: 4, category: 'Cow' });
+    yieldService.projectAhead.mockResolvedValue(PROJECTION);
+  });
+
+  test('defaults to 60 days', async () => {
+    const res = response();
+    await controller.getProjection({ params: { id: '4' }, query: {} }, res);
+    expect(yieldService.projectAhead).toHaveBeenCalledWith(4, 60);
+    expect(res.json).toHaveBeenCalledWith({ cattle_id: 4, days: 60, projection: PROJECTION });
+  });
+
+  test('keeps days between 1 and 60', async () => {
+    await controller.getProjection({ params: { id: '4' }, query: { days: '400' } }, response());
+    expect(yieldService.projectAhead).toHaveBeenLastCalledWith(4, 60);
+    await controller.getProjection({ params: { id: '4' }, query: { days: '-3' } }, response());
+    expect(yieldService.projectAhead).toHaveBeenLastCalledWith(4, 1);
+  });
+
+  test('404 for a missing cow and 400 for a heifer', async () => {
+    Cattle.getCattleById.mockResolvedValueOnce(undefined);
+    const missing = response();
+    await controller.getProjection({ params: { id: '9' }, query: {} }, missing);
+    expect(missing.status).toHaveBeenCalledWith(404);
+    Cattle.getCattleById.mockResolvedValueOnce({ cattle_id: 5, category: 'Heifer' });
+    const heifer = response();
+    await controller.getProjection({ params: { id: '5' }, query: {} }, heifer);
+    expect(heifer.status).toHaveBeenCalledWith(400);
+    expect(yieldService.projectAhead).not.toHaveBeenCalled();
+  });
+});
+
+describe('getHerdProjection', () => {
+  const yieldService = require('../services/yieldService');
+  const HERD = { cows: 3, series: [] };
+
+  beforeEach(() => yieldService.projectHerd.mockResolvedValue(HERD));
+
+  test('defaults to the whole herd over 60 days', async () => {
+    const res = response();
+    await controller.getHerdProjection({ query: {} }, res);
+    expect(yieldService.projectHerd).toHaveBeenCalledWith({ days: 60, breed: null, cattleId: null });
+    expect(res.json).toHaveBeenCalledWith({ days: 60, cattle_id: null, breed: null, projection: HERD });
+  });
+
+  test('passes filters through and keeps days between 1 and 60', async () => {
+    await controller.getHerdProjection({ query: { days: '90', breed: 'Jersey', cattle_id: '2' } }, response());
+    expect(yieldService.projectHerd).toHaveBeenLastCalledWith({ days: 60, breed: 'Jersey', cattleId: 2 });
+  });
+
+  test('rejects a bad cattle_id', async () => {
+    const res = response();
+    await controller.getHerdProjection({ query: { cattle_id: 'x' } }, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(yieldService.projectHerd).not.toHaveBeenCalled();
+  });
+});

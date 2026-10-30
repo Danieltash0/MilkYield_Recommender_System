@@ -53,3 +53,10 @@
 .alert-warning { background: var(--accent-soft); color: #78350f; border: 1px solid #fde68a; }
 .yield-advice { flex-direction: column; gap: 0.25rem; margin: 1rem 0 0; }
 .yield-advice ul { margin: 0; padding-left: 1.2rem; font-weight: 400; }
+
+/* Yield projection (components/YieldProjectionChart.js, YieldInsight.js) */
+.projection-summary { margin: 0 0 0.75rem; }
+.projection-events { font-size: 0.85rem; margin: 0.25rem 0 0; padding-left: 1.4rem; }
+.projection-notes { font-size: 0.85rem; margin-top: 0.5rem; }
+.projection-notes p { margin: 0.25rem 0; }
+.projection-notes ul { margin: 0.25rem 0; padding-left: 1.2rem; }

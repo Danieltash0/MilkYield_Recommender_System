@@ -8,6 +8,8 @@ router.use(authenticateToken);
 
 router.get('/alerts', recommendationController.getAlerts);
 router.get('/trend', recommendationController.getTrend);
+router.get('/projection', recommendationController.getHerdProjection);
 router.get('/cattle/:id', recommendationController.getForCattle);
+router.get('/cattle/:id/projection', recommendationController.getProjection);
 
 module.exports = router;

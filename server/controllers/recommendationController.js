@@ -19,6 +19,39 @@ exports.getForCattle = async (req, res) => {
   }
 };
 
+// Expected daily yield for one cow over the next days (up to 60)
+exports.getProjection = async (req, res) => {
+  try {
+    const cow = await Cattle.getCattleById(req.params.id);
+    if (!cow) return res.status(404).json({ error: 'Cattle not found' });
+    if (cow.category !== 'Cow') return res.status(400).json({ error: 'Yield projection is only available for cows' });
+    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 60, 1), 60);
+    const projection = await yieldService.projectAhead(cow.cattle_id, days);
+    res.json({ cattle_id: cow.cattle_id, days, projection });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not load the yield projection' });
+  }
+};
+
+// The herd's (or one breed's or cow's) expected daily yield over the next days (up to 60)
+exports.getHerdProjection = async (req, res) => {
+  try {
+    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 60, 1), 60);
+    let cattleId = null;
+    if (req.query.cattle_id) {
+      cattleId = parseInt(req.query.cattle_id, 10);
+      if (!Number.isInteger(cattleId) || cattleId < 1) return res.status(400).json({ error: 'cattle_id must be a positive whole number' });
+    }
+    const breed = req.query.breed ? String(req.query.breed).slice(0, 100) : null;
+    const projection = await yieldService.projectHerd({ days, breed, cattleId });
+    res.json({ days, cattle_id: cattleId, breed, projection });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not load the herd projection' });
+  }
+};
+
 // Low and high readings across the herd
 exports.getAlerts = async (req, res) => {
   try {

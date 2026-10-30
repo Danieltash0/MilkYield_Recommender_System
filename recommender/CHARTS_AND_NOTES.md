@@ -209,6 +209,33 @@ A dot above the band with no colour isn't a contradiction. The band uses the day
 | **Cow profile → Yield insight** (`components/YieldInsight.js`) | `perCow` | Period picker for 14, 30, 60 or 90 days. The tooltip shows milkings instead of a cow count. |
 | **Manager dashboard → Herd yield** (`pages/dashboard/widgets.js`, `HerdYieldCard`) | `compact`, `height={200}` | Last 14 days, no legend, plus "X% of expected · N low or high readings" and a link to the trends page |
 
+### Projected yield (the next 30 or 60 days)
+
+The cow profile's Yield insight card also has a **Projected yield** chart (`components/YieldProjectionChart.js`). It looks forward instead of back, so it's a separate component.
+
+- **Data:** `GET /api/recommendations/cattle/:id/projection?days=60`, from `useYieldProjection`. For each day it returns: `date`, `expected` (L/day), `low`, `high`, `days_in_milk`, `days_pregnant` and `dry`. It also returns monthly figures, milestones and assumptions.
+- **How it's calculated:** from her current level along the lactation curve and pregnancy dates. See section 5 of `TRAINING_RESULTS.md`.
+- **What it draws:**
+  - The likely range as a shaded `Area`. It widens from ±20% tomorrow to ±30% at 60 days.
+  - The projection as a dashed green `Line`.
+  - A numbered dotted `ReferenceLine` for each milestone: peak, late lactation, pregnancy affecting yield, dry-off, calving. Each is listed under the chart.
+- **Around the chart:**
+  - **Above:** a summary line, e.g. "About 25.49 L a day now → 21.71 L a day by 29 Dec (−15%). Next 30 days: about 24.53 L a day, 735.9 L in total."
+  - **Below:** the method behind the starting level, the assumptions held constant (usual ration, milkings per day, health), and the typical error.
+- **Not available:** for a cow with no calving date, the card shows the note from the API instead of a chart.
+
+### Herd projection on the Yield trends page
+
+- **Picker:** the Yield trends page has a **"Project next 30 / 60 days"** picker, or "No projection". It defaults to 60 days.
+- **On the chart:** after the history, `YieldTrendChart` (its `projection` prop) draws the projection as a dashed purple line with a light purple likely range. A dotted **Today** line separates history from projection; if no milking has been judged today yet, a blank point marks today.
+- **Data:** `GET /api/recommendations/projection?days=60&breed=&cattle_id=`, from `useHerdProjection`. It follows the page's breed and cow filters.
+  - Every matching cow's projection is added up day by day, along with how many cows are still milking each day.
+  - Cows that can't be projected, e.g. those with no calving date, are listed under the chart, not guessed.
+  - Upcoming dry-offs and calvings are listed by cow.
+- **Range:** each cow's range is added up, which assumes all their errors go the same way. The herd range is therefore wider than the real uncertainty.
+- **Stat card:** "Projected next 30 days" shows the total litres and the average per day.
+- **Tooltip:** after today it shows the projected litres, the likely range and the number of cows milking.
+
 ## 4. Things to know
 
 - **Gaps in the data:** the charts only show judged milkings. If the charts look empty for older dates, run `npm run backfill:predictions`.
@@ -225,7 +252,8 @@ A dot above the band with no colour isn't a contradiction. The band uses the day
 | Storage | `server/models/YieldPrediction.js` (`save`, `forCattle`, `recentAlerts`, `dailyTrend`) |
 | API | `server/controllers/recommendationController.js`, `server/routes/recommendationRoutes.js` |
 | Backfill | `server/scripts/backfillPredictions.js` |
-| Client data | `client/src/api/useRecommendations.js` (`useYieldInsight`, `useYieldTrend`, `useYieldAlerts`) |
-| Chart | `client/src/components/YieldTrendChart.js`, `client/src/styles/charts.css` |
+| Projection | `server/services/projection.js`, `projectAhead` and `projectHerd` in `server/services/yieldService.js` |
+| Client data | `client/src/api/useRecommendations.js` (`useYieldInsight`, `useYieldTrend`, `useYieldAlerts`, `useYieldProjection`, `useHerdProjection`) |
+| Chart | `client/src/components/YieldTrendChart.js`, `client/src/components/YieldProjectionChart.js`, `client/src/styles/charts.css` |
 | Pages | `client/src/pages/milking/YieldTrends.js`, `client/src/components/YieldInsight.js`, `client/src/pages/dashboard/widgets.js` |
-| Tests | `server/tests/explain.test.js`, `server/tests/recommendationController.test.js`, `server/tests/yieldService.test.js` |
+| Tests | `server/tests/explain.test.js`, `server/tests/recommendationController.test.js`, `server/tests/yieldService.test.js`, `server/tests/projection.test.js` |

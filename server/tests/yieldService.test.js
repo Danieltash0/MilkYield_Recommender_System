@@ -178,3 +178,88 @@ describe('forecastNext', () => {
     expect(await yieldService.forecastNext(99)).toBeNull();
   });
 });
+
+describe('projectAhead', () => {
+  test('projects two months from the level of the next two sessions', async () => {
+    const p = await yieldService.projectAhead(1);
+    // Moving average of all 5 records (17.2 L), then again with that added: 17.2 L per session
+    expect(p).toMatchObject({ available: true, method: 'moving_average', daily_level: 34.4, days_pregnant: 0 });
+    expect(p.days_in_milk).toBeGreaterThan(100);
+    expect(p.series).toHaveLength(60);
+    expect(p.series[59].expected).toBeLessThan(p.series[0].expected); // past peak
+    expect(p.months).toHaveLength(2);
+    expect(p.assumptions[0]).toBe('Feeding stays as it has been.');
+    expect(p.assumptions.some((a) => /last milking record is \d+ days old/.test(a))).toBe(true);
+  });
+
+  test('names the usual ration and a current illness in the assumptions', async () => {
+    const day = (ago) => new Date(Date.now() - ago * 864e5).toISOString().slice(0, 10);
+    FeedRecord.getConcentrateMap.mockResolvedValue(new Map([[day(1), 3], [day(2), 3]]));
+    HealthRecord.getRecords.mockResolvedValue([{ record_type: 'Illness', record_date: day(1) }]);
+    const p = await yieldService.projectAhead(1, 30);
+    expect(p.series).toHaveLength(30);
+    expect(p.assumptions[0]).toBe('Concentrate stays at about 3 kg a day.');
+    expect(p.assumptions[2]).toMatch(/unwell or under treatment now/);
+  });
+
+  test('needs a calving date', async () => {
+    Cattle.getCattleById.mockResolvedValue({ ...COW, last_calving_date: null });
+    const p = await yieldService.projectAhead(1);
+    expect(p).toMatchObject({ available: false, days_in_milk: null });
+    expect(p.note).toMatch(/calving date/);
+  });
+
+  test('null for a missing cow', async () => {
+    Cattle.getCattleById.mockResolvedValue(undefined);
+    expect(await yieldService.projectAhead(99)).toBeNull();
+  });
+});
+
+describe('projectHerd', () => {
+  const HEIFER = { ...COW, cattle_id: 2, name: 'Kiki', category: 'Heifer' };
+  const NO_CALVING = { ...COW, cattle_id: 3, name: 'Zawadi', breed: 'Jersey', last_calving_date: null };
+
+  beforeEach(() => {
+    Cattle.getAllCattle.mockResolvedValue([COW, HEIFER, NO_CALVING]);
+    Cattle.getCattleById.mockImplementation(async (id) => [COW, HEIFER, NO_CALVING].find((c) => c.cattle_id === id));
+  });
+
+  test('adds up the cows it can project and lists the rest', async () => {
+    const herd = await yieldService.projectHerd({ days: 30 });
+    const one = await yieldService.projectAhead(1, 30);
+    expect(herd.cows).toBe(1);
+    expect(herd.left_out).toEqual([{ cattle_id: 3, name: 'Zawadi', reason: expect.stringMatching(/calving date/) }]);
+    expect(herd.series).toHaveLength(30);
+    expect(herd.series[0]).toMatchObject({ date: one.series[0].date, expected: one.series[0].expected, cows_milking: 1 });
+    expect(herd.months[0].total).toBeCloseTo(one.months[0].total, 1);
+  });
+
+  test('sums every projected cow day by day', async () => {
+    const TWIN = { ...COW, cattle_id: 4, name: 'Twin' };
+    Cattle.getAllCattle.mockResolvedValue([COW, TWIN]);
+    Cattle.getCattleById.mockImplementation(async (id) => [COW, TWIN].find((c) => c.cattle_id === id));
+    const herd = await yieldService.projectHerd({ days: 10 });
+    const one = await yieldService.projectAhead(1, 10);
+    expect(herd.cows).toBe(2);
+    expect(herd.series[9].expected).toBeCloseTo(one.series[9].expected * 2, 1);
+    expect(herd.series[9].high).toBeCloseTo(one.series[9].high * 2, 1);
+    expect(herd.daily_level).toBeCloseTo(one.daily_level * 2, 1);
+  });
+
+  test('filters by breed or cow', async () => {
+    expect((await yieldService.projectHerd({ days: 5, breed: 'Jersey' })).cows).toBe(0);
+    expect((await yieldService.projectHerd({ days: 5, cattleId: 1 })).cows).toBe(1);
+    const empty = await yieldService.projectHerd({ days: 5, cattleId: 2 });
+    expect(empty).toMatchObject({ cows: 0, series: [], left_out: [] });
+  });
+
+  test('lists dry-offs by cow name', async () => {
+    const today = new Date();
+    const back = (n) => new Date(today.getTime() - n * 864e5).toISOString().slice(0, 10);
+    Cattle.getAllCattle.mockResolvedValue([{ ...COW, conception_date: back(200) }]);
+    Cattle.getCattleById.mockResolvedValue({ ...COW, conception_date: back(200) });
+    const herd = await yieldService.projectHerd({ days: 60 });
+    expect(herd.events).toEqual([expect.objectContaining({ name: 'Bessie', cattle_id: 1, label: expect.stringMatching(/dry-off/) })]);
+    expect(herd.series[59]).toMatchObject({ expected: 0, cows_milking: 0 });
+  });
+});

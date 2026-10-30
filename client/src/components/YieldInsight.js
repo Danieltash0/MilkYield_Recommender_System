@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useYieldInsight, useYieldTrend } from '../api/useRecommendations';
+import { useYieldInsight, useYieldTrend, useYieldProjection } from '../api/useRecommendations';
 import YieldTrendChart from './YieldTrendChart';
+import YieldProjectionChart from './YieldProjectionChart';
 import '../styles/tables.css';
 import '../styles/charts.css';
 
@@ -32,6 +33,54 @@ const CowTrend = ({ cattleId }) => {
         </select>
       </div>
       <YieldTrendChart {...trend} perCow empty="No judged milkings for this cow in this period yet." />
+    </div>
+  );
+};
+
+const PROJECTION_PERIODS = [30, 60];
+const niceDate = (d) => new Date(`${d}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+
+// Expected daily yield over the next one or two months, along the lactation curve
+const CowProjection = ({ cattleId }) => {
+  const [days, setDays] = useState(60);
+  const { projection: p, loading, error } = useYieldProjection(cattleId, days);
+  return (
+    <div className="yield-trend">
+      <div className="chart-header">
+        <h3>Projected yield</h3>
+        <select value={days} onChange={(e) => setDays(Number(e.target.value))} aria-label="Projection period">
+          {PROJECTION_PERIODS.map((d) => <option key={d} value={d}>Next {d} days</option>)}
+        </select>
+      </div>
+      {error && <div className="alert alert-error">{error}</div>}
+      {!error && loading && <p className="muted chart-placeholder" style={{ height: 280 }}>Loading projection…</p>}
+      {!error && !loading && p && !p.available && <p className="muted">{p.note}</p>}
+      {!error && !loading && p && p.available && (
+        <>
+          <p className="projection-summary">
+            About <strong>{p.daily_level} L a day</strong> now
+            {' '}→ <strong>{p.series[p.series.length - 1].expected} L a day</strong> by {niceDate(p.series[p.series.length - 1].date)}
+            {' '}({p.change_pct > 0 ? '+' : ''}{p.change_pct}%).
+            {p.months.map((m, i) => (
+              <span key={m.from}>
+                {' '}{i === 0 ? 'Next 30 days' : 'The 30 days after'}: about {m.avg_daily} L a day, {m.total} L in total.
+              </span>
+            ))}
+          </p>
+          <YieldProjectionChart projection={p} />
+          <div className="projection-notes muted">
+            <p>
+              Follows the lactation curve{p.days_pregnant ? ' and her pregnancy' : ''} from her current level
+              ({METHODS[p.method] ? METHODS[p.method].toLowerCase() : 'recent records'}). It assumes:
+            </p>
+            <ul>{p.assumptions.map((a) => <li key={a}>{a}</li>)}</ul>
+            <p>
+              Typical error: about 5–7% for a single day on test data, but expect up to about 15% on real cows
+              a month or more ahead. Monthly averages are more reliable than single days.
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -94,6 +143,8 @@ const YieldInsight = ({ cattleId }) => {
       )}
 
       <CowTrend cattleId={cattleId} />
+
+      <CowProjection cattleId={cattleId} />
 
       {kg && (
         <div className="table-card">

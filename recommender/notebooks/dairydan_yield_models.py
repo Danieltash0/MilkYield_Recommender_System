@@ -337,3 +337,177 @@ with open(os.path.join(OUT_DIR, 'sample_input.json'), 'w') as f:
 print(f'Wrote yield_nn.onnx, yield_lr.onnx, model_meta.json and sample_input.json to {OUT_DIR}/')
 if data_source == 'synthetic':
     print('WARNING: data_source is "synthetic". Do not use these models for real decisions.')
+
+# %% [markdown]
+# ## How far ahead can the yield be predicted?
+#
+# The models above predict the next session only. This backtest measures how
+# the error grows further ahead: 1 week (14 sessions), 1 month (60) and
+# 2 months (120), plus the average daily yield over each of the next two
+# months. Each forecast starts from one session and uses only what was known
+# then; every target is in the test split. Forecasts start every 3 days per cow.
+#
+# Methods:
+# - **ma**: the 7-session average, held flat.
+# - **lr / nn**: recursive. The model predicts one session, that prediction
+#   becomes the newest lag, and it repeats. Days in milk, pregnancy and age
+#   advance with the calendar; feed stays at today's level and the cow is
+#   assumed to stay healthy.
+# - **curve**: the cow's current level (the neural net's next two sessions),
+#   split by her own morning/evening pattern and moved along the Wood
+#   lactation curve and the late-pregnancy decline.
+# - **kg**: the same, using the knowledge graph's stage and pregnancy bands
+#   (`yield_factors`) instead of the smooth curve.
+#
+# On synthetic data the curve method is flattered, because the herd was
+# generated from that same curve. Rerun on farm data for an honest figure.
+# Results are written to `horizon_backtest.json`.
+
+# %%
+HORIZONS = {'next session': 1, '1 week': 7 * MILKINGS_PER_DAY, '1 month': 30 * MILKINGS_PER_DAY,
+            '2 months': 60 * MILKINGS_PER_DAY}
+MONTH = 30 * MILKINGS_PER_DAY
+STEPS = 2 * MONTH
+ORIGIN_EVERY = 3 * MILKINGS_PER_DAY
+# Knowledge-graph bands from db/migrations/2026-10-27_yield_factors_knowledge_graph.sql: (from, multiplier)
+STAGE_BANDS = [(0, 0.99), (15, 1.22), (45, 1.23), (100, 1.05), (200, 0.77), (305, 0.65)]
+PREGNANCY_BANDS = [(0, 1.0), (120, 0.94), (180, 0.82), (240, 0.72)]
+# Unknown in the future: feed is held at today's value, health assumed good
+HELD = ['concentrate_kg']
+ASSUMED = {'health_active': 0.0, 'days_since_illness': 30.0}
+
+
+def wood(dim):
+    t = np.maximum(dim, 1)
+    return t ** 0.2 * np.exp(-0.004 * t)
+
+
+def pregnancy(days):
+    return 1 - 0.002 * np.maximum(0, days - 120)
+
+
+def banded(values, bands):
+    lows = np.array([lo for lo, _ in bands])
+    mults = np.array([m for _, m in bands])
+    return mults[np.searchsorted(lows, values, side='right') - 1]
+
+
+full = pd.concat([train, test]).sort_index().reset_index(drop=True)
+pos, n = full['pos'].to_numpy(), full['n'].to_numpy()
+cut = np.floor(n * TRAIN_SHARE)
+origins = np.flatnonzero(pos % ORIGIN_EVERY == 0)
+ahead = np.arange(STEPS)
+# rows[i, k] is the session k steps after origin i (clamped to the cow's last session)
+last = origins + (n[origins] - pos[origins] - 1)
+rows = np.minimum(origins[:, None] + ahead, last[:, None])
+exists = pos[origins][:, None] + ahead < n[origins][:, None]
+in_test = pos[origins][:, None] + ahead >= cut[origins][:, None]
+actual = np.where(exists, full['litres'].to_numpy()[rows], np.nan)
+
+X_full = full[FEATURES].to_numpy(np.float32)
+lag_idx = [FEATURES.index(c) for c in LAGS]
+
+
+def recursive_paths(model):
+    lags = full[LAGS].to_numpy(np.float32)[origins]
+    paths = np.empty((len(origins), STEPS))
+    for k in range(STEPS):
+        X = X_full[rows[:, k]].copy()
+        X[:, lag_idx] = lags
+        X[:, FEATURES.index('mean7')] = lags.mean(axis=1)
+        for c in HELD:
+            if c in FEATURES:
+                X[:, FEATURES.index(c)] = X_full[origins, FEATURES.index(c)]
+        for c, v in ASSUMED.items():
+            if c in FEATURES:
+                X[:, FEATURES.index(c)] = v
+        paths[:, k] = model.predict(X)
+        lags = np.column_stack([paths[:, k], lags[:, :-1]]).astype(np.float32)
+    return paths
+
+
+dim = full['days_in_milk'].to_numpy()[rows]
+dp = full['days_pregnant'].fillna(0).to_numpy()[rows]
+paths = {
+    'ma': np.repeat(full['mean7'].to_numpy()[origins][:, None], STEPS, axis=1),
+    'lr': recursive_paths(lr_model),
+    'nn': recursive_paths(nn_model),
+}
+# The curve starts from the cow's level per session (the neural net's next
+# morning and evening averaged), then splits it by her own session pattern:
+# lag j falls on the same session as step k when j + k is odd
+level = paths['nn'][:, :MILKINGS_PER_DAY].mean(axis=1, keepdims=True)
+lag_vals = full[LAGS].to_numpy()[origins]
+same = np.array([[(j + k) % MILKINGS_PER_DAY == 1 for j in range(1, WINDOW + 1)] for k in range(1, STEPS + 1)])
+session_mean = np.stack([lag_vals[:, s].mean(axis=1) for s in same], axis=1)
+other_mean = np.stack([lag_vals[:, ~s].mean(axis=1) for s in same], axis=1)
+session_share = session_mean / ((session_mean + other_mean) / 2)
+paths['curve'] = level * session_share * wood(dim) / wood(dim[:, :1]) * pregnancy(dp) / pregnancy(dp[:, :1])
+paths['kg'] = (level * session_share * banded(dim, STAGE_BANDS) / banded(dim[:, :1], STAGE_BANDS)
+               * banded(dp, PREGNANCY_BANDS) / banded(dp[:, :1], PREGNANCY_BANDS))
+
+
+def horizon_metrics(y, pred):
+    ratio = np.abs(y / pred - 1)
+    return {**metrics(y, pred), 'n': int(len(y)),
+            # Share inside the app's 80-120% band, and the +/- band that would hold 80%
+            'within_20pct': float(np.mean(ratio <= 0.2) * 100),
+            'band_for_80pct': float(np.percentile(ratio, 80) * 100)}
+
+
+targets = {}
+for label, h in HORIZONS.items():
+    ok = exists[:, h - 1] & in_test[:, h - 1]
+    targets[label] = (ok, lambda p, h=h: p[:, h - 1], actual[:, h - 1])
+for m in (1, 2):
+    cols = slice((m - 1) * MONTH, m * MONTH)
+    ok = exists[:, m * MONTH - 1] & in_test[:, (m - 1) * MONTH]
+    # Average L/day over the month
+    targets[f'month {m} average'] = (ok, lambda p, cols=cols: p[:, cols].mean(axis=1) * MILKINGS_PER_DAY,
+                                     actual[:, cols].mean(axis=1) * MILKINGS_PER_DAY)
+
+horizon = {}
+for label, (ok, pick, y) in targets.items():
+    horizon[label] = {name: horizon_metrics(y[ok], pick(p)[ok]) for name, p in paths.items()}
+
+print(f'{"target":18s}{"n":>6s}' + ''.join(f'{name:>9s}' for name in paths) + '   (MAPE %)')
+for label, res in horizon.items():
+    print(f'{label:18s}{res["ma"]["n"]:6d}' + ''.join(f'{res[name]["mape"]:9.1f}' for name in paths))
+print('\nneural net / curve: share within the 80-120% band, and the +/- band that holds 80% of readings')
+for label, res in horizon.items():
+    print(f'{label:18s}' + '  '.join(f'{name} {res[name]["within_20pct"]:5.1f}% in, +/-{res[name]["band_for_80pct"]:4.1f}%'
+                                    for name in ('nn', 'curve')))
+
+# The app's 2-month projection (server/services/projection.js) works in daily
+# totals: the next two sessions' level, moved along the curve day by day
+day_cols = np.arange(STEPS // MILKINGS_PER_DAY) * MILKINGS_PER_DAY
+day_actual = sum(actual[:, day_cols + s] for s in range(MILKINGS_PER_DAY))
+day_ok = exists[:, day_cols + MILKINGS_PER_DAY - 1] & in_test[:, day_cols]
+day_dim, day_dp = dim[:, day_cols], dp[:, day_cols]
+day_shape = {
+    'curve': wood(day_dim) / wood(day_dim[:, :1]) * pregnancy(day_dp) / pregnancy(day_dp[:, :1]),
+    'kg': (banded(day_dim, STAGE_BANDS) / banded(day_dim[:, :1], STAGE_BANDS)
+           * banded(day_dp, PREGNANCY_BANDS) / banded(day_dp[:, :1], PREGNANCY_BANDS)),
+}
+day_level = paths['nn'][:, :MILKINGS_PER_DAY].sum(axis=1, keepdims=True)
+daily = {}
+print('\napp projection, daily totals: MAPE, share within +/-20%, +/- band holding 90%')
+for name, shape in day_shape.items():
+    pred = day_level * shape
+    daily[name] = {}
+    for d in (1, 7, 14, 30, 45, 60):
+        ok = day_ok[:, d - 1]
+        y, p = day_actual[ok, d - 1], pred[ok, d - 1]
+        daily[name][f'day {d}'] = {**horizon_metrics(y, p), 'band_for_90pct': float(np.percentile(np.abs(y / p - 1), 90) * 100)}
+    for m in (1, 2):
+        ok = day_ok[:, m * 30 - 1] & day_ok[:, (m - 1) * 30]
+        cols = slice((m - 1) * 30, m * 30)
+        daily[name][f'month {m} average'] = horizon_metrics(day_actual[ok, cols].mean(axis=1), pred[ok, cols].mean(axis=1))
+    for label, r in daily[name].items():
+        print(f'{name:6s}{label:16s} MAPE {r["mape"]:5.1f}%  within 20% {r["within_20pct"]:5.1f}%'
+              + (f'  90%: +/-{r["band_for_90pct"]:4.1f}%' if 'band_for_90pct' in r else ''))
+
+with open(os.path.join(OUT_DIR, 'horizon_backtest.json'), 'w') as f:
+    json.dump({'data_source': data_source, 'origins': int(len(origins)), 'horizons_sessions': HORIZONS,
+               'results': horizon, 'daily_projection': daily}, f, indent=2)
+print(f'Wrote horizon_backtest.json to {OUT_DIR}/')

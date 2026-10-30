@@ -55,6 +55,66 @@ export const useYieldTrend = ({ days = 30, cattleId = '', breed = '' } = {}) => 
   return { series, loading, error, reload };
 };
 
+// Expected daily yield for one cow over the next `days` days (up to 60)
+export const useYieldProjection = (cattleId, days = 60) => {
+  const [projection, setProjection] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const reload = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await apiRequest(`/recommendations/cattle/${cattleId}/projection?days=${days}`, { headers: getAuthHeaders() });
+      setProjection(data.projection);
+    } catch (err) {
+      setError(err.message || 'Failed to load the yield projection');
+    } finally {
+      setLoading(false);
+    }
+  }, [cattleId, days]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  return { projection, loading, error, reload };
+};
+
+// The herd's expected daily yield over the next `days` days (0 = off), or one cow's or breed's
+export const useHerdProjection = ({ days = 60, cattleId = '', breed = '' } = {}) => {
+  const [projection, setProjection] = useState(null);
+  const [loading, setLoading] = useState(Boolean(days));
+  const [error, setError] = useState(null);
+
+  const reload = useCallback(async () => {
+    if (!days) {
+      setProjection(null);
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const params = new URLSearchParams({ days: String(days) });
+      if (cattleId) params.set('cattle_id', cattleId);
+      if (breed) params.set('breed', breed);
+      const data = await apiRequest(`/recommendations/projection?${params}`, { headers: getAuthHeaders() });
+      setProjection(data.projection);
+    } catch (err) {
+      setError(err.message || 'Failed to load the projection');
+    } finally {
+      setLoading(false);
+    }
+  }, [days, cattleId, breed]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  return { projection, loading, error, reload };
+};
+
 // Low and high readings across the herd over the last `days` days
 export const useYieldAlerts = (days = 7) => {
   const [alerts, setAlerts] = useState([]);

@@ -6,6 +6,7 @@ Last updated 2026-10-29. This file covers four pieces of work on the milk yield 
 2. **Retraining the app's models on a Kenyan-level synthetic herd** built from the cited breed figures. These are the models now in `server/ml/models/`.
 3. **A knowledge graph for cold start**: the estimate for cows with fewer than 3 milking records.
 4. **Yield ranges and feed-aware advisory tips**, added after checking the system against the project's conceptual framework.
+5. **A backtest of how far ahead yield can be predicted**, from the next session up to 2 months, and the **2-month projection** built from it.
 
 The end of the file explains how to run the models in the app.
 
@@ -246,24 +247,134 @@ To match the diagram exactly, use `PREDICTOR=ma`, or add the neural net to the d
 
 ---
 
-## 5. Verification
+## 5. How far ahead can yield be predicted?
+
+The app's models predict **one milking ahead**: the cow's next session, about 12 hours away. This backtest measures how the error grows when predicting further ahead.
+
+Code: the last section of `recommender/notebooks/dairydan_yield_models.py` (and the notebook). Raw numbers: `recommender/results/horizon_backtest.json`.
+
+### How it was tested
+
+- **Starting points:** a forecast starts every 3 days for each cow in the synthetic herd. Each forecast uses only what was known on its starting day.
+- **Targets:** every target is in the test split, so no model is scored on milkings it was trained on.
+- **What's predicted:**
+  - A single session 1 week (14 sessions), 1 month (60) and 2 months (120) ahead.
+  - The average L/day over each of the next two months.
+- **Methods compared:**
+
+| Method | How it predicts further ahead |
+|---|---|
+| Moving average | The last 7 sessions' average, held flat |
+| Linear regression, neural net | Recursive: predict the next session, feed that prediction back in as the newest record, and repeat. Days in milk, pregnancy and age move with the calendar; feed stays at today's level and the cow is assumed to stay healthy. |
+| Lactation curve | The cow's current level (the neural net's next two sessions), split by her own morning/evening pattern, then moved along the Wood lactation curve and the late-pregnancy decline |
+| Knowledge-graph bands | The same, but using the app's `yield_factors` stage and pregnancy bands instead of the smooth curve |
+
+### Results (MAPE, the average % error)
+
+| Target | Moving average | Linear regression | Neural net | Lactation curve | KG bands |
+|---|---:|---:|---:|---:|---:|
+| Next session | 14.0% | 6.6% | **6.4%** | 6.7% | 6.7% |
+| 1 week ahead | 8.4% | 9.5% | 12.1% | **8.3%** | 9.5% |
+| 1 month ahead | 8.7% | 17.0% | 27.0% | **8.1%** | 15.2% |
+| 2 months ahead | 15.8% | 24.1% | 39.4% | **7.9%** | 15.7% |
+| Month 1 average (L/day) | 9.1% | 8.6% | 15.8% | **4.3%** | 7.7% |
+| Month 2 average (L/day) | 19.8% | 17.0% | 31.9% | **4.1%** | 15.3% |
+
+How much of a normal range each method needs:
+
+| Target | Neural net: readings inside ±20% | Neural net: ± that holds 80% | Curve: readings inside ±20% | Curve: ± that holds 80% |
+|---|---:|---:|---:|---:|
+| Next session | 98% | 9.8% | 98% | 10.5% |
+| 1 week ahead | 82% | 18.7% | 92% | 12.6% |
+| 1 month ahead | 56% | 40.5% | 93% | 12.2% |
+| 2 months ahead | 49% | 46.6% | 94% | 11.6% |
+| Month 1 average | 76% | 22.8% | 98% | 6.2% |
+| Month 2 average | 56% | 36.9% | 97% | 5.7% |
+
+### What this shows
+
+1. **Predictions get less accurate the further ahead they go.** The neural net is the best method for the next session (6.4%), but fed its own predictions it drifts: 12% at 1 week, 27% at 1 month, 39% at 2 months. That's worse than simply holding the 7-session average flat, so **the current models shouldn't be run forward to forecast months ahead**.
+2. **Monthly averages are easier than single sessions.** Morning and evening differences and day-to-day noise cancel out over a month. With the curve method, "her average next month" is about twice as accurate as "her yield on one morning next month" (4.3% vs 8.1%).
+3. **Long-range forecasts need the lactation curve and pregnancy dates.** These are the main reasons yield changes over two months, and the models only see them indirectly.
+4. **The lactation curve's figures are flattered.** The synthetic herd was generated from this same curve, so its error barely grows with distance. On real cows, whose curves differ, expect something nearer the **knowledge-graph bands** column: about 9–10% at 1 week and 15–16% at 1–2 months.
+5. **First-attempt mistake, now fixed:** the first version started the curve from a single session's prediction. Every target in the other session (morning milkings give about 20% more than evening ones here) was then off by about 17%. Starting from a daily level and splitting it by the cow's own morning/evening pattern fixed it. The app would need to do the same.
+
+### What this means for building a 2-month forecast
+
+- **Keep the neural net for the next milking.** It's the most accurate there.
+- **For anything further ahead, project the cow's level along the lactation curve and the pregnancy decline.** Show monthly averages as the main figure and single sessions only for the near term.
+- **Widen the range with distance.**
+  - On this data ±20% is fine at every horizon for the curve method.
+  - On real cows the KG-bands figures suggest it should grow, to around ±25–30% at two months.
+  - Rerun this backtest on exported farm data (`npm run export:training`, then `DATA_CSV`) to set the actual widths.
+
+### Built: the 2-month projection
+
+Added after the backtest. Code: `server/services/projection.js`, `projectAhead` in `server/services/yieldService.js`, and the endpoint `GET /api/recommendations/cattle/:id/projection?days=60` (1–60 days).
+
+**How it works**
+
+1. **Starting level:** the configured predictor's next two sessions, added together as litres per day. Under `PREDICTOR=auto` that's the neural net, under `ma` the moving average, and for cold starts the knowledge graph. Using two sessions means it doesn't matter whether a morning or an evening milking comes next.
+2. **Daily path:** each day, the level moves along the Wood lactation curve (peak at 50 days in milk) and the late-pregnancy decline (−0.2% a day after day 120 of pregnancy). Days in milk and days pregnant move forward with the calendar.
+3. **Held constant at her recent values:** concentrate (her usual ration over the last 7 days), health, milkings per day, parity and breed. The response lists these as assumptions in plain words. It also warns when she's unwell now, or when her last milking record is over 14 days old.
+4. **Dry-off:** a pregnant cow is expected to be dried off at day 220 of pregnancy. From then on her projected yield is 0.
+5. **Range:** widens from ±20% tomorrow to ±30% at day 60.
+6. **Milestones** crossed in the window are marked on the chart: peak, late lactation (day 200), 305 days, pregnancy affecting yield, dry-off and calving.
+7. **Monthly figures:** average L/day and total litres for each 30 days.
+8. **No calving date:** the projection isn't available, and the response says to add the calving date.
+
+**Where it shows:**
+
+- **The cow's profile,** under **Yield insight → Projected yield**, with a "Next 30 / 60 days" picker.
+- **Milking → Yield trends:** the herd's projection continues the history chart after today. It's every matching cow's projection added up, and follows the breed and cow filters. Endpoint: `GET /api/recommendations/projection?days=60&breed=&cattle_id=`.
+- **How the herd figures are built:**
+  - Cows that can't be projected (no calving date) are listed, not guessed.
+  - Upcoming dry-offs and calvings are listed by cow.
+  - The herd range adds up each cow's range, so it's on the wide side. Herd totals should in practice be more accurate than single cows, because individual errors partly cancel out.
+
+**Expected error (daily totals, from the notebook's backtest):**
+
+| Horizon | Synthetic herd (same curve) | Mismatched curve (closer to real cows) |
+|---|---:|---:|
+| Tomorrow | 5.3% | 5.3% |
+| 1 week | 6.8% | 8.0% |
+| 2 weeks | 6.9% | 10.1% |
+| 1 month | 6.8% | 14.4% |
+| 2 months | 6.4% | 15.4% |
+| Average L/day, next 30 days | 4.3% | 7.7% |
+| Average L/day, days 31–60 | 4.2% | 15.3% |
+
+- **The two columns:**
+  - The first is what the synthetic data gives. It's optimistic, because that herd was generated from the same curve.
+  - The second uses the knowledge graph's coarser bands as the curve. It stands in for a cow whose real curve doesn't match.
+- **Range coverage:** ±30% held about 90% of daily totals at every horizon in both tests.
+- **Not covered:** none of these figures include future illness, feed changes or a cow being sold or dried off early. The projection can't foresee them.
+- **Live check:** on the demo cows, it projected falls of 10–19% over 60 days for cows past peak. Daisy's crossing into late lactation and Rosie's pregnancy were marked.
+
+---
+
+## 6. Verification
 
 | Check | Result |
 |---|---|
 | ONNX files give the same answers as scikit-learn | Within 2e-6 |
-| `npm test` (server) | 159/159 passed (12 suites, including the new `advice.test.js`) |
+| `npm test` (server) | 184/184 passed (13 suites, including `advice.test.js` and `projection.test.js`) |
 | `npm run smoke` (server) | Passed, including Node matching Python on the sample inputs |
 | Client `npm run build` | Compiled successfully |
 | Migrations on the dev database, run twice | Applied once; the second run did nothing |
 | Fresh `schema.sql` + `seed.sql` + all migrations (throwaway database) | Loaded cleanly |
 | Live API with `PREDICTOR=auto` | Neural net used for cows with history; knowledge graph used for a new cow |
 | Framework walkthrough, `PREDICTOR=ma` | All checks passed |
+| Notebook script rerun with the horizon backtest (output to a scratch folder) | Same model scores as the deployed models (neural net MAE 0.240 L); deployed model files unchanged |
 
-**Not checked:** the profile page (range, usual ration and the "Before the next milking" box) in a browser.
+| Projection endpoint on the demo cows (`PREDICTOR=auto`) | 60-day series, monthly figures, milestones and assumptions returned; 404 for a missing cow |
+| Herd projection endpoint on the demo herd | 4 cows summed: 74.4 L/day now, about 2,149 L over the next 30 days; breed and cow filters work; 400 for a bad `cattle_id` |
+
+**Not checked:** in a browser, the profile page (range, usual ration, the "Before the next milking" box, the Projected yield chart) and the projection on the Yield trends chart.
 
 ---
 
-## 6. Running the models in the app
+## 7. Running the models in the app
 
 ### First time, or after pulling these changes
 
@@ -298,7 +409,7 @@ PREDICTOR=auto
 
 ```
 cd server
-npm test               # 159 tests
+npm test               # 184 tests
 npm run smoke          # loads both ONNX models and the knowledge graph
 cd ..
 npm run dev            # server and client together
@@ -316,9 +427,10 @@ The server log should show `Recommender: the ONNX models were trained on SYNTHET
    - A **"Before the next milking"** box when there are tips.
    - The profile-based (knowledge graph) estimate with its factors.
    - Recent judgements, each with its range and note.
+   - **Projected yield:** the next 30 or 60 days along the lactation curve, with the likely range, milestones and monthly totals.
 4. **The knowledge graph:** add a new cow with category **Cow**, a calving date and parity, then log her first milking. The note says *"…based on the breed average adjusted for …"*.
 5. **Charts:**
-   - **Milking → Yield trends** shows the herd's daily milk against the expected amount, the 80–120% normal band, and red or orange dots on days with low or high readings. You can filter by period, breed and cow, and a table below lists the alerts.
+   - **Milking → Yield trends** shows the herd's daily milk against the expected amount, the 80–120% normal band, and red or orange dots on days with low or high readings. You can filter by period, breed and cow, and a table below lists the alerts. After today, the chart continues with the herd's projection for the next 30 or 60 days: a dashed purple line with its likely range.
    - **Cow profile → Yield insight** shows the same chart for that cow.
    - **Manager dashboard → Herd yield** summarises the last 14 days.
 
