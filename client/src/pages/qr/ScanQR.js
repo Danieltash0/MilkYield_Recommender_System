@@ -5,6 +5,39 @@ import { parseScanned } from '../../api/useQR';
 import '../../styles/qr.css';
 
 const NOT_OURS = 'That QR code is not a DairyDan cattle label.';
+const FALLBACK = 'You can still scan from a photo or type the code below.';
+
+// Why the camera would not start, in words the user can act on
+const cameraError = (err) => {
+  if (!window.isSecureContext) {
+    return `The camera only works on a secure page (https:// or http://localhost), and this page is ${window.location.origin}. ${FALLBACK}`;
+  }
+  const name = err && err.name;
+  if (name === 'NotAllowedError' || name === 'SecurityError') {
+    return `Camera access is blocked. Allow it from the camera or lock icon in the address bar, then try again. ${FALLBACK}`;
+  }
+  if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+    return `No camera was found on this device. ${FALLBACK}`;
+  }
+  if (name === 'NotReadableError' || name === 'AbortError') {
+    return `The camera is being used by another app or browser tab. Close it and try again. ${FALLBACK}`;
+  }
+  return `Could not open the camera (${(err && err.message) || err}). ${FALLBACK}`;
+};
+
+// qr-scanner reports every camera failure as "Camera not found.", so ask the
+// browser directly for the real reason
+const diagnoseCamera = async (err) => {
+  if (!window.isSecureContext || !navigator.mediaDevices) return cameraError(err);
+  if (err && err.name) return cameraError(err);
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    stream.getTracks().forEach((t) => t.stop());
+    return `The camera is available but the scanner could not start it. Press Start camera to try again. ${FALLBACK}`;
+  } catch (probeErr) {
+    return cameraError(probeErr);
+  }
+};
 
 const ScanQR = () => {
   const navigate = useNavigate();
@@ -63,7 +96,7 @@ const ScanQR = () => {
       await scanner.start();
     } catch (err) {
       stop();
-      setError('Could not open the camera. Allow camera access (the page must be on HTTPS or localhost), or use a photo or the code below.');
+      setError(await diagnoseCamera(err));
     }
   };
 

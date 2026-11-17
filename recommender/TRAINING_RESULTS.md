@@ -114,8 +114,8 @@ The notebook generates a herd whenever no real data file is supplied:
 - **Breed figures:** the cited figures from `breed_yield_baselines.csv`, scaled to Kenyan smallholder levels:
   - **Exotic breeds:** the cited averages come from well-managed zero-grazing farms, so they're scaled to 35%. Holstein-Friesian becomes 15.75 L/day, Ayrshire 10.5, Guernsey 8.75 and Jersey 7.
   - **Sahiwal:** scaled to 55%, giving 5.5 L/day.
-  - **Boran (4.5), Zebu (1.6) and crossbred (8):** these were measured on farms, so they're used as they are.
-- **Built-in effects:**
+  - **Boran (4.5), Zebu (1.6) and crossbred (8):** these were measured on farms, so they're used as they are. 
+- **Built-in effects:** 
   - Lactation curve: yield rises after calving, peaks around day 50, then falls.
   - Each cow's own ability, ±20%.
   - Parity: first-calf cows give 80%, second-calf cows 93%.
