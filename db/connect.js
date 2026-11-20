@@ -14,6 +14,7 @@ module.exports = function connect() {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'dairydan_db',
-    multipleStatements: true
+    multipleStatements: true,
+    ssl: require(path.join(serverDir, 'utils', 'dbSsl'))()
   });
 };

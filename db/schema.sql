@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     role ENUM('manager', 'vet', 'worker', 'admin') NOT NULL,
     status ENUM('active', 'inactive') DEFAULT 'active',
+    token_version INT UNSIGNED NOT NULL DEFAULT 0,
     last_login TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -1,11 +1,22 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const { checkSecret, corsOptions } = require('./middleware/security');
+
+checkSecret();
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+// Which proxies to trust for the client IP (rate limits, activity log).
+// Locally that is the CRA dev proxy on loopback; on Render set TRUST_PROXY=1
+// (one load balancer in front of the app).
+const trustProxy = process.env.TRUST_PROXY;
+app.set('trust proxy', trustProxy === undefined ? 'loopback' : /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy);
+app.disable('x-powered-by');
+app.use(helmet());
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '100kb' }));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'DairyDan backend is running', timestamp: new Date().toISOString() });

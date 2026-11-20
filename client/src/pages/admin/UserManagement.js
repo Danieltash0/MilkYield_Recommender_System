@@ -53,8 +53,8 @@ const UserManagement = () => {
   };
 
   const confirmReset = async () => {
-    if (newPassword.length < 8) {
-      setResetError('Password must be at least 8 characters');
+    if (newPassword.length < 5 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      setResetError('Password must be at least 5 characters, with a letter and a number');
       return;
     }
     setBusy(true);
@@ -175,7 +175,8 @@ const UserManagement = () => {
           onConfirm={confirmReset}
         >
           {resetError && <div className="alert alert-error" role="alert">{resetError}</div>}
-          <label htmlFor="new-password">New password (at least 8 characters)</label>
+          <label htmlFor="new-password">New password (at least 5 characters, with a letter and a number)</label>
+          <p className="muted">This also signs {toReset.name} out on every device.</p>
           <input id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoFocus />
         </Modal>
       )}

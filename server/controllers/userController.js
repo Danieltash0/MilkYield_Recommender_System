@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const ActivityLog = require('../models/ActivityLog');
 const { hashPassword } = require('../utils/bcrypt');
+const { passwordProblem } = require('../utils/password');
 
 // Roles a person can pick when signing up. 'admin' is never self-assignable.
 const SIGNUP_ROLES = {
@@ -21,8 +22,12 @@ exports.signup = async (req, res) => {
     if (!EMAIL_RE.test(email)) {
       return res.status(400).json({ error: 'Enter a valid email address' });
     }
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    if (name.trim().length > 100) {
+      return res.status(400).json({ error: 'Name must be 100 characters or fewer' });
+    }
+    const weak = passwordProblem(password);
+    if (weak) {
+      return res.status(400).json({ error: weak });
     }
     const dbRole = SIGNUP_ROLES[role];
     if (!dbRole) {

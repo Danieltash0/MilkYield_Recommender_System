@@ -59,8 +59,8 @@ const UserForm = ({ initial = emptyUser, onSubmit, submitLabel, isNew = false, i
       {isNew && (
         <div className="form-group">
           <label htmlFor="password">Temporary password</label>
-          <input id="password" name="password" type="password" minLength={8} autoComplete="new-password" value={form.password} onChange={handleChange} required />
-          <p className="muted">At least 8 characters. Share it with the user and ask them to change it.</p>
+          <input id="password" name="password" type="password" minLength={5} autoComplete="new-password" value={form.password} onChange={handleChange} required />
+          <p className="muted">At least 5 characters, with a letter and a number. Share it with the user and ask them to change it.</p>
         </div>
       )}
 

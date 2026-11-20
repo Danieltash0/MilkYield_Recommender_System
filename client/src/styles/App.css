@@ -272,3 +272,17 @@ input[type='checkbox']:focus-visible, input[type='radio']:focus-visible { outlin
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
   .cattle-card:hover { transform: none; }
 }
+/* ---- Sign-in and sign-up: password field, rules ------------------------------------ */
+.password-field { position: relative; }
+.password-field input { padding-right: 4.25rem; }
+.password-toggle {
+  position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%);
+  min-height: 0; padding: 0.3rem 0.6rem; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--primary-green); font-size: 0.8rem; font-weight: 600; cursor: pointer;
+}
+.password-toggle:hover { background: var(--light-green); }
+.password-toggle:focus-visible { outline: 2px solid var(--secondary-green); outline-offset: 1px; }
+.password-rules { list-style: none; display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0.45rem 0 0; padding: 0; font-size: 0.8rem; color: var(--gray-medium); }
+.password-rules li::before { content: '○'; margin-right: 0.35rem; }
+.password-rules li.ok { color: var(--primary-green); }
+.password-rules li.ok::before { content: '✓'; }

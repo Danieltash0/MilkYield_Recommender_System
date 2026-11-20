@@ -3,6 +3,7 @@ const User = require('../models/User');
 const ActivityLog = require('../models/ActivityLog');
 const Setting = require('../models/Setting');
 const { hashPassword } = require('../utils/bcrypt');
+const { passwordProblem } = require('../utils/password');
 const logActivity = require('../utils/logActivity');
 
 const ROLES = ['admin', 'manager', 'vet', 'worker'];
@@ -17,7 +18,7 @@ const validateUser = (b, { isNew }) => {
   if (!b.email || !EMAIL_RE.test(b.email.trim())) return 'Enter a valid email address';
   if (!ROLES.includes(b.role)) return 'Invalid role';
   if (b.status && !STATUSES.includes(b.status)) return 'Invalid status';
-  if (isNew && (!b.password || b.password.length < 8)) return 'Password must be at least 8 characters';
+  if (isNew) return passwordProblem(b.password);
   return null;
 };
 
@@ -127,10 +128,13 @@ exports.updateUser = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   try {
     const { password } = req.body;
-    if (!password || password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
     const user = await UserAdmin.getUserById(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
+    const weak = passwordProblem(password);
+    if (weak) return res.status(400).json({ error: weak });
     await UserAdmin.setPassword(user.user_id, await hashPassword(password));
+    // Sign the user out everywhere: sessions opened with the old password end now
+    await User.bumpTokenVersion(user.user_id);
     await logActivity(req, 'password_reset', `Reset the password for ${user.email}`);
     res.json({ message: 'Password reset successfully' });
   } catch (err) {

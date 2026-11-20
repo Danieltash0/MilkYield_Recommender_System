@@ -12,7 +12,9 @@ const pool = mysql.createPool({
   queueLimit: 0,
   // Return DATE/TIMESTAMP columns as plain strings so dates such as a cow's
   // date_of_birth are not shifted by timezone conversion on the way to the client.
-  dateStrings: true
+  dateStrings: true,
+  // Hosted MySQL (Aiven, TiDB Cloud, ...) requires TLS: set DB_SSL=true
+  ssl: require('./dbSsl')()
 });
 
 module.exports = pool;

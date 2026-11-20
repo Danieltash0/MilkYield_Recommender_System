@@ -9,6 +9,7 @@
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
+    "db:schema": "node db/run-schema.js",
     "db:migrate": "node db/run-migrations.js",
     "db:seed": "node db/run-seed.js",
     "install-all": "npm install && cd server && npm install && cd ../client && npm install"

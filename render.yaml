@@ -1,0 +1,45 @@
+# Render Blueprint for the DairyDan API (Express + ONNX recommender).
+# Render > New > Blueprint > pick this repository. Values marked sync: false
+# are asked for when the Blueprint is created. See docs/DEPLOYMENT.md.
+services:
+  - type: web
+    name: dairydan-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm ci
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 12h
+      - key: PREDICTOR
+        value: auto
+      - key: MILKINGS_PER_DAY
+        value: "2"
+      # The Vercel address of the frontend, e.g. https://dairydan.vercel.app
+      - key: CLIENT_ORIGIN
+        sync: false
+      # Hosted MySQL connection (Aiven: Service > Overview > Connection information)
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_SSL
+        value: "true"
+      - key: DB_SSL_CA
+        sync: false
