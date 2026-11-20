@@ -6,6 +6,7 @@ services:
     name: dairydan-api
     runtime: node
     plan: free
+    region: frankfurt
     rootDir: server
     buildCommand: npm ci
     startCommand: node server.js
