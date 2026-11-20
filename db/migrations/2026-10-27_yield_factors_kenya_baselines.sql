@@ -16,8 +16,9 @@ INSERT INTO breed_yield_baselines (breed, avg_daily_yield, source) VALUES
 ('Boran',              4.50, 'ILRI AGTR (Muguga and Ngong herd records)'),
 ('Zebu',               1.60, 'Cambridge Animal Genetic Resources, SEAZ on-farm characterization, SE Kenya (2011)'),
 ('Crossbreed',         8.00, 'USDA FAS GAIN Kenya Dairy 2024 (7.6 L/day); Ajak et al. 2020, Nyeri (10.7 L/day)'),
-('Other',              8.00, 'USDA FAS GAIN Kenya Dairy 2024 (7.6 L/day); Ajak et al. 2020, Nyeri (10.7 L/day)') AS incoming
+('Other',              8.00, 'USDA FAS GAIN Kenya Dairy 2024 (7.6 L/day); Ajak et al. 2020, Nyeri (10.7 L/day)')
+-- VALUES(col) instead of a row alias (AS incoming): TiDB does not support the alias
 ON DUPLICATE KEY UPDATE
     -- avg_daily_yield first: the source check must still see the old source
-    avg_daily_yield = IF(breed_yield_baselines.source LIKE 'placeholder%', incoming.avg_daily_yield, breed_yield_baselines.avg_daily_yield),
-    source = IF(breed_yield_baselines.source LIKE 'placeholder%', incoming.source, breed_yield_baselines.source);
+    avg_daily_yield = IF(breed_yield_baselines.source LIKE 'placeholder%', VALUES(avg_daily_yield), breed_yield_baselines.avg_daily_yield),
+    source = IF(breed_yield_baselines.source LIKE 'placeholder%', VALUES(source), breed_yield_baselines.source);

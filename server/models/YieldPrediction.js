@@ -25,12 +25,12 @@ exports.save = async (p) => {
   await db.execute(
     `INSERT INTO milk_yield_predictions
        (cattle_id, record_id, milking_date, session, expected_litres, actual_litres, ratio, method, status, reason, message, model_source)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) AS incoming
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
-       cattle_id = incoming.cattle_id, milking_date = incoming.milking_date, session = incoming.session,
-       expected_litres = incoming.expected_litres, actual_litres = incoming.actual_litres, ratio = incoming.ratio,
-       method = incoming.method, status = incoming.status, reason = incoming.reason,
-       message = incoming.message, model_source = incoming.model_source`,
+       cattle_id = VALUES(cattle_id), milking_date = VALUES(milking_date), session = VALUES(session),
+       expected_litres = VALUES(expected_litres), actual_litres = VALUES(actual_litres), ratio = VALUES(ratio),
+       method = VALUES(method), status = VALUES(status), reason = VALUES(reason),
+       message = VALUES(message), model_source = VALUES(model_source)`,
     [
       p.cattle_id,
       p.record_id,

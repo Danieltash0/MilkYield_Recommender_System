@@ -43,10 +43,10 @@ exports.getRecords = async (opts = {}) => {
 exports.saveRecord = async (r, recordedBy) => {
   const [result] = await db.execute(
     `INSERT INTO feed_records (cattle_id, fed_on, concentrate_kg, forage_kg, notes, recorded_by)
-     VALUES (?, ?, ?, ?, ?, ?) AS incoming
+     VALUES (?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE feed_id = LAST_INSERT_ID(feed_records.feed_id),
-       concentrate_kg = incoming.concentrate_kg, forage_kg = incoming.forage_kg,
-       notes = incoming.notes, recorded_by = incoming.recorded_by`,
+       concentrate_kg = VALUES(concentrate_kg), forage_kg = VALUES(forage_kg),
+       notes = VALUES(notes), recorded_by = VALUES(recorded_by)`,
     [r.cattle_id, r.fed_on, r.concentrate_kg, r.forage_kg ?? null, r.notes || null, recordedBy]
   );
   // affectedRows is 1 for a new row, 2 for a replaced one
