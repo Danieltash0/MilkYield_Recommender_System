@@ -29,7 +29,7 @@ services:
       # The Vercel address of the frontend, e.g. https://dairydan.vercel.app
       - key: CLIENT_ORIGIN
         sync: false
-      # Hosted MySQL connection (Aiven: Service > Overview > Connection information)
+      # Hosted MySQL-compatible database (TiDB Cloud Starter: cluster > Connect)
       - key: DB_HOST
         sync: false
       - key: DB_PORT
@@ -42,5 +42,6 @@ services:
         sync: false
       - key: DB_SSL
         value: "true"
+      # Only for a provider whose certificate is not from a public CA; empty for TiDB
       - key: DB_SSL_CA
         sync: false

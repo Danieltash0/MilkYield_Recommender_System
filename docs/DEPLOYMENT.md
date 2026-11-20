@@ -2,21 +2,23 @@
 
 | Part | Where | What it runs |
 |---|---|---|
-| Frontend (React) | **Vercel** | the `client/` build, served as static files |
-| Backend (Express API + ONNX models) | **Render** web service | `server/`, `node server.js` |
-| Database (MySQL 8) | **Aiven for MySQL** (free plan) | the tables from `db/` |
+| Frontend (React) | **Vercel** (Hobby, free) | the `client/` build, served as static files |
+| Backend (Express API + ONNX models) | **Render** web service (free) | `server/`, `node server.js` |
+| Database (MySQL-compatible) | **TiDB Cloud Starter** (free) | the tables from `db/` |
 
-Render has no managed MySQL, so the database lives on Aiven (any hosted MySQL 8
-works the same way, e.g. TiDB Cloud Serverless). The Python recommender is not
-deployed: the trained models ship as ONNX files in `server/ml/models/` and run
-inside the Node server.
+Render has no managed MySQL, and Aiven retired its free MySQL plan in November
+2026, so the database lives on TiDB Cloud Starter, a MySQL-compatible service with
+a free tier (25 GiB storage, 250M request units a month; it is throttled, not
+billed, if the quota runs out). The Python recommender is not deployed: the
+trained models ship as ONNX files in `server/ml/models/` and run inside the Node
+server.
 
 ```
 Browser ──HTTPS──> Vercel (React)          https://<app>.vercel.app
    │
    └──HTTPS /api──> Render (Express)       https://<api>.onrender.com/api
-                        │
-                        └──TLS──> Aiven MySQL
+                        │                  region: Frankfurt
+                        └──TLS──> TiDB Cloud Starter (AWS eu-central-1)
 ```
 
 Order: **database → backend → frontend → point the backend at the frontend.**
@@ -25,81 +27,140 @@ Order: **database → backend → frontend → point the backend at the frontend
 
 ## 0. Push the code
 
-Vercel and Render deploy from GitHub, so commit and push everything first
-(including `render.yaml`, `client/vercel.json` and `db/run-schema.js`).
+Vercel and Render deploy from GitHub (`main` by default), so merge the work into
+`main` and push it, including `render.yaml` and `client/vercel.json`.
 
-## 1. Database on Aiven
+`render.yaml` sets `region: frankfurt` for the backend (closest Render region to
+East Africa). Put the database in the same region; if you change one, change both.
 
-1. Sign up at aiven.io, **Create service > MySQL**, choose the **Free** plan and a
-   region near Render's (e.g. Frankfurt for Render's Frankfurt region).
-2. When it is running, open **Overview > Connection information** and note
-   *Host*, *Port*, *User* (`avnadmin`), *Password* and *Database name* (`defaultdb`).
-3. Download the **CA certificate** (`ca.pem`) from the same page.
-4. Create the tables and (optionally) the demo data from your own machine. The
-   `db/` scripts read `server/.env`, but variables set in the shell win.
+## 1. Database on TiDB Cloud
 
-   PowerShell, from the project folder:
+### 1.1 Create the cluster
 
-   ```powershell
-   $env:DB_HOST="<host>"; $env:DB_PORT="<port>"; $env:DB_USER="avnadmin"
-   $env:DB_PASSWORD="<password>"; $env:DB_NAME="defaultdb"
-   $env:DB_SSL="true"; $env:DB_SSL_CA = Get-Content "C:\path\to\ca.pem" -Raw
-   npm run db:schema
-   npm run db:migrate
-   npm run db:seed      # optional: demo users, cows and milkings
-   ```
+1. Sign up at **tidbcloud.com** (GitHub or Google sign-in works).
+2. **Create Cluster > Starter** (the free option, not Essential or Dedicated).
+   Provider **AWS**, region **Frankfurt (eu-central-1)**, name `dairydan`.
+   Leave the spending limit at **$0**.
+3. Wait until the cluster shows **Available**.
 
-   Close that PowerShell window afterwards so later commands use your local
-   database again.
+### 1.2 Get the connection details
+
+On the cluster page, **Connect**: connection type *Public*, connect with
+*General*. Click **Generate Password** and save it straight away (it is shown
+once; *Reset password* makes a new one). Note:
+
+| Field | Example |
+|---|---|
+| Host | `gateway01.eu-central-1.prod.aws.tidbcloud.com` |
+| Port | `4000` |
+| User | `3xYzAbC12345.root` (the prefix is part of the user name) |
+| Password | the generated one |
+
+TiDB's certificate is signed by a public CA that Node already trusts, so no
+`ca.pem` / `DB_SSL_CA` is needed, only `DB_SSL=true`.
+
+### 1.3 Create the database
+
+In the cluster's **SQL Editor**, run:
+
+```sql
+CREATE DATABASE dairydan;
+```
+
+### 1.4 Create the tables from your machine
+
+The `db/` scripts read `server/.env`, but variables set in the shell win. Use a
+**new** PowerShell window so the settings disappear when it is closed. From the
+project folder (server dependencies must be installed: `npm run install-all`):
+
+```powershell
+$env:DB_HOST="<host>"; $env:DB_PORT="4000"; $env:DB_USER="<prefix>.root"
+$env:DB_PASSWORD="<password>"; $env:DB_NAME="dairydan"; $env:DB_SSL="true"
+npm run db:schema      # -> Schema applied.
+npm run db:migrate     # -> Applied ... / N migration(s) applied.
+npm run db:seed        # optional: demo users, cattle, tasks, health and finance records
+```
+
+Check in the SQL Editor:
+
+```sql
+USE dairydan; SHOW TABLES; SELECT email, role FROM users;
+```
+
+Close the PowerShell window afterwards so later commands use your local database
+again.
 
 > **If you seed:** the demo accounts use the passwords in `db/testusers.txt`,
-> which is in the repository. Sign in as admin after deploying and change the
-> admin password (Admin > Users > Reset password), or delete the demo accounts.
+> which is in the repository. After deploying, sign in as admin and change the
+> passwords (Admin > Users), or delete the demo accounts.
+
+| Error | Cause |
+|---|---|
+| `Access denied for user` | user name without its prefix, or wrong password |
+| `Unknown database 'dairydan'` | step 1.3 was skipped |
+| `connections using insecure transport are prohibited` | `DB_SSL` is not `true` |
+| `ETIMEDOUT` | the network blocks port 4000; try another network (e.g. a phone hotspot) |
+| `You have an error in your SQL syntax ... TiDB` | MySQL-only syntax; see *TiDB compatibility* below |
 
 ## 2. Backend on Render
 
-1. render.com > **New > Blueprint**, connect the GitHub repository. Render reads
+1. render.com (sign up with GitHub and give it access to the repository) >
+   **New > Blueprint**, pick the repository and branch `main`. Render reads
    `render.yaml` and proposes the `dairydan-api` web service.
 2. Fill in the values it asks for:
 
    | Variable | Value |
    |---|---|
-   | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | from Aiven |
-   | `DB_SSL_CA` | the whole contents of `ca.pem` (or one line with `\n` for line breaks) |
-   | `CLIENT_ORIGIN` | leave as `https://placeholder.invalid` for now; set in step 4 |
+   | `DB_HOST`, `DB_USER`, `DB_PASSWORD` | from TiDB (user name with its prefix) |
+   | `DB_PORT` | `4000` |
+   | `DB_NAME` | `dairydan` |
+   | `DB_SSL_CA` | leave empty (delete it under *Environment* if Render insists on a value) |
+   | `CLIENT_ORIGIN` | `https://placeholder.invalid` for now; set in step 4 |
 
    `JWT_SECRET` is generated by Render, and `NODE_ENV=production`,
-   `TRUST_PROXY=1`, `DB_SSL=true` and `PREDICTOR=auto` are already set.
-3. Apply. The build runs `npm ci` in `server/`; the start command is
-   `node server.js`. When it is live, open
-   `https://<api>.onrender.com/api/health`; it should say
+   `TRUST_PROXY=1`, `DB_SSL=true`, `PREDICTOR=auto` and `MILKINGS_PER_DAY=2` are
+   already set.
+3. **Apply.** The build runs `npm ci` in `server/` (3–6 minutes the first time);
+   the logs end with `DairyDan server running on port ...` and *Your service is
+   live*.
+4. Open `https://<api>.onrender.com/api/health`; it should say
    `"DairyDan backend is running"`.
 
 (Without the Blueprint: **New > Web Service**, Root Directory `server`, Build
-`npm ci`, Start `node server.js`, Health check path `/api/health`, and add the
-variables from `render.yaml` by hand.)
+`npm ci`, Start `node server.js`, Health check path `/api/health`, region
+Frankfurt, and add the variables from `render.yaml` by hand.)
+
+`PREDICTOR=auto` uses whichever ONNX model `model_meta.json` rates best. The
+bundled models are trained on synthetic data; set `PREDICTOR=ma` (7-session
+moving average) under *Environment* if you prefer the simpler baseline.
 
 ## 3. Frontend on Vercel
 
-1. vercel.com > **Add New > Project**, import the repository.
+1. vercel.com (Hobby plan, sign up with GitHub) > **Add New > Project**, import
+   the repository.
 2. **Root Directory: `client`**. Vercel detects Create React App
    (build `npm run build`, output `build`).
 3. Environment variable:
 
    | Variable | Value |
    |---|---|
-   | `REACT_APP_API_URL` | `https://<api>.onrender.com/api` |
+   | `REACT_APP_API_URL` | `https://<api>.onrender.com/api` (ends in `/api`, no trailing slash) |
 
    It is built into the JavaScript, so it is public: never put secrets in a
    `REACT_APP_` variable.
-4. Deploy. `client/vercel.json` sends every path to `index.html`, so refreshing
-   a page such as `/cattle/5` works.
+4. **Deploy.** `client/vercel.json` sends every path to `index.html`, so
+   refreshing a page such as `/cattle/5` works.
+5. Under **Settings > Git**, check that the production branch is `main`.
+
+If the build stops with *Treating warnings as errors because process.env.CI =
+true*, add the variable `CI` = `false` and redeploy.
 
 ## 4. Connect them
 
 1. Copy the production address Vercel gives you, e.g. `https://dairydan.vercel.app`.
-2. On Render, set `CLIENT_ORIGIN` to exactly that (no trailing slash; several
-   addresses can be comma-separated). Save; Render redeploys.
+2. On Render, **dairydan-api > Environment**, set `CLIENT_ORIGIN` to exactly that
+   (with `https://`, no trailing slash; several addresses can be
+   comma-separated). Save; Render redeploys.
 3. Open the Vercel address and sign in.
 
 ---
@@ -107,25 +168,54 @@ variables from `render.yaml` by hand.)
 ## Checks after deploying
 
 - [ ] `https://<api>.onrender.com/api/health` responds
-- [ ] Sign up a new account, then sign in
-- [ ] Log a milking and see the recommendation
+- [ ] Sign in as admin; refreshing any page does not give a 404
+- [ ] Sign up a new account, then sign in with it
+- [ ] Add a cow, log a milking and see the recommendation and yield chart
+- [ ] Log feed for a cow
 - [ ] Scan QR > Start camera works (needs HTTPS, which Vercel provides)
-- [ ] Admin password changed if the demo data was seeded
+- [ ] Generate a report and download the PDF
+- [ ] Demo passwords changed if the demo data was seeded
+
+## Troubleshooting sign-in and API calls
+
+Open the browser's developer tools (F12) > Console / Network:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `blocked by CORS policy` | `CLIENT_ORIGIN` does not match the Vercel address exactly | correct it on Render and save |
+| requests go to `<app>.vercel.app/api/...` | `REACT_APP_API_URL` not set | set it on Vercel, then **redeploy** |
+| `404` on `/auth/login` | `REACT_APP_API_URL` is missing `/api` | fix it, then **redeploy** |
+| request pending for up to a minute | Render waking up from sleep | wait and retry |
+| `500` | usually the database connection | read the service **Logs** on Render |
+
+Changing `REACT_APP_API_URL` only takes effect after a Vercel redeploy, because
+it is fixed at build time.
+
+## TiDB compatibility
+
+TiDB speaks the MySQL protocol, but not every MySQL 8 feature. Keep new SQL in
+migrations and models to what both support:
+
+- **Upserts:** use `VALUES(col)` in `ON DUPLICATE KEY UPDATE`, not the MySQL 8.0.19+
+  row alias (`INSERT ... VALUES (...) AS incoming ... incoming.col`), which TiDB
+  rejects. See `server/models/FeedRecord.js`.
+- **No triggers, stored procedures, functions or events.**
+- **`AUTO_INCREMENT` ids are unique but not consecutive** (they can jump, e.g. to
+  30001). Never assume ids 1, 2, 3; look rows up by a natural key, as
+  `db/seed.sql` does with emails.
+
+Test a new migration against TiDB before relying on it in production.
 
 ## Things to know
 
 - **Cold starts.** Render's free plan sleeps after 15 minutes without traffic;
   the first request after that takes up to about a minute. Open `/api/health`
   a minute before a demo.
-- **Aiven free plan** services can be powered off after a long idle period;
-  Aiven emails before it does, and you can power it on again from the console.
+- **TiDB free quota** resets monthly; usage is shown on the cluster page.
 - **QR labels** encode the address of the page they were printed from. Labels
   printed from `localhost` must be reprinted from the deployed site.
 - **Preview deployments** on Vercel get their own addresses; add one to
   `CLIENT_ORIGIN` if you want to use it against the API.
-- **A CORS error in the browser console / failed requests** usually mean `CLIENT_ORIGIN` does
-  not exactly match the Vercel address, or `REACT_APP_API_URL` is missing `/api`.
-  Changing `REACT_APP_API_URL` needs a Vercel **redeploy** to take effect.
-- **Updates:** pushing to the connected branch redeploys both. Database changes
-  go in a new file in `db/migrations/`; run `npm run db:migrate` against Aiven
-  the same way as in step 1.
+- **Updates:** pushing to `main` redeploys both. Database changes go in a new
+  file in `db/migrations/`; run `npm run db:migrate` against TiDB the same way
+  as in step 1.4.

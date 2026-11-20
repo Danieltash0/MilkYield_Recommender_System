@@ -4,13 +4,38 @@ import { useAuth, dashboardPathFor, ROLES } from '../context/AuthContext';
 import Logo from './Logo';
 import Icon from './Icon';
 
-// App navigation. A fixed sidebar on desktop; below 1024px it collapses into a
-// top bar whose menu button slides the same sidebar in as a drawer.
+const DRAWER_QUERY = '(max-width: 1023px)';
+const COLLAPSED_KEY = 'dairydan_sidebar_collapsed';
+
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const onChange = (e) => setMatches(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, [query]);
+  return matches;
+};
+
+// App navigation. A fixed sidebar on desktop that can be collapsed to an icon
+// rail (remembered between visits); below 1024px it becomes a top bar whose menu
+// button slides the full sidebar in as a drawer.
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSED_KEY) === '1');
+  const isDrawer = useMediaQuery(DRAWER_QUERY);
+  const isRail = collapsed && !isDrawer;
+
+  // The content column's margin follows the sidebar width (see App.css)
+  useEffect(() => {
+    localStorage.setItem(COLLAPSED_KEY, collapsed ? '1' : '0');
+    document.body.classList.toggle('sidebar-collapsed', collapsed);
+    return () => document.body.classList.remove('sidebar-collapsed');
+  }, [collapsed]);
 
   // Close the drawer after navigating, and on Escape
   useEffect(() => setOpen(false), [pathname]);
@@ -65,20 +90,30 @@ const Navbar = () => {
 
       {open && <div className="sidebar-backdrop" onClick={() => setOpen(false)} />}
 
-      <aside id="app-sidebar" className={`sidebar${open ? ' open' : ''}`}>
+      <aside id="app-sidebar" className={`sidebar${open ? ' open' : ''}${collapsed ? ' collapsed' : ''}`}>
         <div className="sidebar-head">
-          <Link to={home} className="brand brand-light"><Logo />DairyDan</Link>
-          <button className="icon-btn sidebar-close" onClick={() => setOpen(false)} aria-label="Close menu">
-            <Icon name="close" size={20} />
+          <Link to={home} className="brand brand-light" title={isRail ? 'DairyDan' : undefined}>
+            <Logo /><span className="brand-text">DairyDan</span>
+          </Link>
+          {/* Desktop: collapse/expand the sidebar. Drawer: hide it. */}
+          <button
+            className="icon-btn sidebar-toggle"
+            onClick={() => (isDrawer ? setOpen(false) : setCollapsed((c) => !c))}
+            aria-label={isDrawer ? 'Close menu' : collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={isDrawer ? open : !collapsed}
+            aria-controls="app-sidebar"
+            title={isDrawer ? 'Close menu' : collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <Icon name="sidebar" size={20} />
           </button>
         </div>
 
         <nav className="nav-menu" aria-label="Main">
           <span className="nav-section">Menu</span>
           {items.map((i) => (
-            <NavLink key={i.to} to={i.to} className={link}>
+            <NavLink key={i.to} to={i.to} className={link} title={isRail ? i.label : undefined}>
               <Icon name={i.icon} size={20} />
-              <span>{i.label}</span>
+              <span className="nav-label">{i.label}</span>
             </NavLink>
           ))}
         </nav>
