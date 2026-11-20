@@ -2,7 +2,7 @@
 export const API_BASE = process.env.REACT_APP_API_URL || '/api';
 
 export const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
@@ -21,9 +21,9 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   if (!response.ok) {
     // Expired or invalid token: clear the session so the user is sent to login
-    if (response.status === 401 && localStorage.getItem('token')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('dairydan_user');
+    if (response.status === 401 && sessionStorage.getItem('token')) {
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('dairydan_user');
       window.dispatchEvent(new Event('auth:expired'));
     }
     throw new Error((data && data.error) || `Request failed (${response.status})`);

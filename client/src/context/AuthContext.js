@@ -36,14 +36,19 @@ export const AuthProvider = ({ children }) => {
 
   const clearSession = useCallback(() => {
     setUser(null);
-    localStorage.removeItem('dairydan_user');
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('dairydan_user');
+    sessionStorage.removeItem('token');
   }, []);
 
   // Restore the session, then re-validate the token with the server
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const saved = localStorage.getItem('dairydan_user');
+    // Older builds kept the session in localStorage, which outlived the tab and
+    // was shared by every tab; drop any leftover copy
+    localStorage.removeItem('token');
+    localStorage.removeItem('dairydan_user');
+
+    const token = sessionStorage.getItem('token');
+    const saved = sessionStorage.getItem('dairydan_user');
     if (!token || !saved) {
       setLoading(false);
       return;
@@ -58,7 +63,7 @@ export const AuthProvider = ({ children }) => {
     apiRequest('/auth/me', { headers: getAuthHeaders() })
       .then((fresh) => {
         setUser(fresh);
-        localStorage.setItem('dairydan_user', JSON.stringify(fresh));
+        sessionStorage.setItem('dairydan_user', JSON.stringify(fresh));
       })
       .catch(() => clearSession())
       .finally(() => setLoading(false));
@@ -77,8 +82,8 @@ export const AuthProvider = ({ children }) => {
         method: 'POST',
         body: JSON.stringify({ email, password })
       });
-      localStorage.setItem('token', res.token);
-      localStorage.setItem('dairydan_user', JSON.stringify(res.user));
+      sessionStorage.setItem('token', res.token);
+      sessionStorage.setItem('dairydan_user', JSON.stringify(res.user));
       setUser(res.user);
       return { success: true, user: res.user };
     } catch (error) {
