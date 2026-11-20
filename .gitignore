@@ -30,3 +30,6 @@ recommender/.env
 
 # Recommender training exports (farm data)
 recommender/data/*.csv
+
+#Database Test Credentials
+db/testusers.txt
